@@ -1,0 +1,36 @@
+version: "3"
+services:
+  api:
+    build: .
+    env_file:
+      - .env.development
+    ports:
+      - 4000:4000
+    depends_on:
+      - redis
+      - database
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DATABASE: atypikhouse
+      POSTGRES_USER: atypikhouse
+      POSTGRES_PASSWORD: atypikhouse
+    ports:
+      - 5432:5432
+    volumes:
+      - atypikhouse-data:/var/lib/postgresql/data
+  redis:
+    image: "redis:alpine"
+    ports:
+      - 6379:6379
+    volumes:
+      - atypikhouse-redis:/data
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8000:8080
+volumes:
+  atypikhouse-data:
+  atypikhouse-redis:

@@ -1,0 +1,16 @@
+cache:
+  paths:
+    - node_modules/
+stages:
+  - test
+
+unit_test:
+  image: node:12-alpine
+  stage: test
+  variables:
+    NODE_ENV: test
+  before_script:
+    # Install yarn
+    - yarn --frozen-lockfile
+  script:
+    - yarn test
