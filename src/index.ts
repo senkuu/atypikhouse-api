@@ -11,10 +11,12 @@ import Redis from "ioredis";
 import connectRedis from "connect-redis";
 
 import { createConnection } from "typeorm";
+import { Offer } from "./entities/Offer";
 import { User } from "./entities/User";
 
 import { buildSchema } from "type-graphql";
 import { HelloResolvers } from "./resolvers/hello";
+import { OfferResolver } from "./resolvers/offer";
 import { UserResolver } from "./resolvers/user";
 
 import { COOKIE_NAME, __prod__ } from "./constants";
@@ -29,7 +31,7 @@ const main = async () => {
     password: process.env.DB_PASSWORD,
     logging: true,
     synchronize: true,
-    entities: [User],
+    entities: [Offer, User],
   });
 
   const app = express();
@@ -68,7 +70,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolvers, UserResolver],
+      resolvers: [HelloResolvers, OfferResolver, UserResolver],
       validate: false,
     }),
     context: ({ req, res }): MyContext => ({ req, res, redis }),
