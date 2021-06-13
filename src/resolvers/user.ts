@@ -17,12 +17,12 @@ import { User } from "../entities/User";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 
 // import utils
+import { validateRegister } from "../utils/validateRegister";
+import { sendEmail } from "../utils/sendEmail";
 
 // import type
 import { RegisterInput } from "./RegisterInput";
 import { FieldError } from "./FieldError";
-import { validateRegister } from "../utils/validateRegister";
-import { sendEmail } from "../utils/sendEmail";
 
 interface ILoginUserSession extends Session {
   userId: number;
@@ -74,14 +74,15 @@ export class UserResolver {
     let user;
     try {
       user = await User.create({
-        username: options.username,
+        name: options.name,
+        surname: options.surname,
         email: options.email,
         password: hashedPassword,
       }).save();
     } catch (err) {
       if (err.code === "23505" || err.detail.includes("already exists")) {
         return {
-          errors: [{ field: "username", message: "Username already taken" }],
+          errors: [{ field: "email", message: "Email already taken" }],
         };
       }
     }

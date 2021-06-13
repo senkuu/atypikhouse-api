@@ -4,7 +4,8 @@ describe("validateRegister function", () => {
   it("should return an empty array when all entries are valid", () => {
     const validUser = {
       email: "valid@email.com",
-      username: "validUsername",
+      name: "John",
+      surname: "Doe",
       password: "validPassword",
     };
 
@@ -16,7 +17,8 @@ describe("validateRegister function", () => {
   it("should return an error when email isn't valid", () => {
     const invalidUser = {
       email: "invalidEmail",
-      username: "validUsername",
+      name: "John",
+      surname: "Doe",
       password: "validPassword",
     };
 
@@ -30,10 +32,11 @@ describe("validateRegister function", () => {
     ]);
   });
 
-  it("should return an error when username had less than 2 characters", () => {
+  it("should return an error when surname had less than 2 characters", () => {
     const invalidUser = {
       email: "valid@email.com",
-      username: "a",
+      name: "John",
+      surname: "D",
       password: "validPassword",
     };
 
@@ -41,17 +44,18 @@ describe("validateRegister function", () => {
 
     expect(errors).toStrictEqual([
       {
-        field: "username",
-        message: "Username must have at least 2 characters",
+        field: "surname",
+        message: "Surname must have at least 2 characters",
       },
     ]);
   });
 
-  it("should return an error when username had more than 2 characters", () => {
+  it("should return an error when username had more than 26 characters", () => {
     const invalidUser = {
       email: "valid@email.com",
-      username:
-        "invalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsername",
+      name: "John",
+      surname:
+        "InvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurname",
       password: "validPassword",
     };
 
@@ -59,8 +63,45 @@ describe("validateRegister function", () => {
 
     expect(errors).toStrictEqual([
       {
-        field: "username",
-        message: "Username must be lesser than 26",
+        field: "surname",
+        message: "Surname must be lesser than 26",
+      },
+    ]);
+  });
+
+  it("should return an error when name had less than 2 characters", () => {
+    const invalidUser = {
+      email: "valid@email.com",
+      name: "J",
+      surname: "Doe",
+      password: "validPassword",
+    };
+
+    const errors = validateRegister(invalidUser);
+
+    expect(errors).toStrictEqual([
+      {
+        field: "name",
+        message: "Name must have at least 2 characters",
+      },
+    ]);
+  });
+
+  it("should return an error when username had more than 26 characters", () => {
+    const invalidUser = {
+      email: "valid@email.com",
+      name:
+        "invalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsername",
+      surname: "Doe",
+      password: "validPassword",
+    };
+
+    const errors = validateRegister(invalidUser);
+
+    expect(errors).toStrictEqual([
+      {
+        field: "name",
+        message: "Name must be lesser than 26",
       },
     ]);
   });
@@ -68,7 +109,8 @@ describe("validateRegister function", () => {
   it("should return an error when password had less than 8 characters", () => {
     const invalidUser = {
       email: "valid@email.com",
-      username: "validUsername",
+      name: "John",
+      surname: "Doe",
       password: "invalid",
     };
 
@@ -85,7 +127,8 @@ describe("validateRegister function", () => {
   it("should return multiple errors when there are many errors at the same time", () => {
     const invalidUser = {
       email: "invalid",
-      username: "a",
+      name: "J",
+      surname: "Doe",
       password: "invalid",
     };
 
@@ -97,8 +140,8 @@ describe("validateRegister function", () => {
         message: "This email is not valid",
       },
       {
-        field: "username",
-        message: "Username must have at least 2 characters",
+        field: "name",
+        message: "Name must have at least 2 characters",
       },
       {
         field: "password",

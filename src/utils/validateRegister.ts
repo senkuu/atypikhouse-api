@@ -12,17 +12,31 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
     });
   }
 
-  if (options.username.length <= 2) {
+  if (options.name.length <= 2) {
     errors.push({
-      field: "username",
-      message: "Username must have at least 2 characters",
+      field: "name",
+      message: "Name must have at least 2 characters",
     });
   }
 
-  if (options.username.length >= 26) {
+  if (options.name.length >= 26) {
     errors.push({
-      field: "username",
-      message: "Username must be lesser than 26",
+      field: "name",
+      message: "Name must be lesser than 26",
+    });
+  }
+
+  if (options.surname.length <= 2) {
+    errors.push({
+      field: "surname",
+      message: "Surname must have at least 2 characters",
+    });
+  }
+
+  if (options.surname.length >= 26) {
+    errors.push({
+      field: "surname",
+      message: "Surname must be lesser than 26",
     });
   }
 
