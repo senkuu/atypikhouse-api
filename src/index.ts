@@ -13,6 +13,9 @@ import connectRedis from "connect-redis";
 import { createConnection } from "typeorm";
 import { Offer } from "./entities/Offer";
 import { User } from "./entities/User";
+import { Booking } from "./entities/Booking";
+import { Criteria } from "./entities/Criteria";
+import { OfferType } from "./entities/OfferType";
 
 import { buildSchema } from "type-graphql";
 import { HelloResolvers } from "./resolvers/hello";
@@ -21,6 +24,9 @@ import { UserResolver } from "./resolvers/user";
 
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { MyContext } from "./types";
+import {BookingResolver} from "./resolvers/booking";
+import {CriteriaResolver} from "./resolvers/criteria";
+import {OfferTypeResolver} from "./resolvers/offerType";
 
 const main = async () => {
   await createConnection({
@@ -31,7 +37,7 @@ const main = async () => {
     password: process.env.DB_PASSWORD,
     logging: true,
     synchronize: true,
-    entities: [Offer, User],
+    entities: [Offer, User, Booking, Criteria, OfferType],
   });
 
   const app = express();
@@ -70,7 +76,7 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolvers, OfferResolver, UserResolver],
+      resolvers: [HelloResolvers, OfferResolver, UserResolver, BookingResolver, CriteriaResolver, OfferTypeResolver],
       validate: false,
     }),
     context: ({ req, res }): MyContext => ({ req, res, redis }),

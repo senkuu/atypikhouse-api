@@ -20,7 +20,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
 
   // send mail with defined transport object
   let info = await transporter.sendMail({
-    from: '"Overgraph" <contact@overgraph.io>', // sender address
+    from: '"Atypik House" <contact@atypikhou.se>', // sender address
     to: to, // list of receivers
     subject: subject, // Subject line
     html: html, // html body

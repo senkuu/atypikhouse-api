@@ -2,11 +2,22 @@ import {
   BaseEntity,
   Column,
   CreateDateColumn,
-  Entity,
+  Entity, OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
+import {Offer} from "./Offer";
+import {Booking} from "./Booking";
+
+export enum UserTypes {
+  DEFAULT,
+  OWNER,
+  CERTIFIED_OWNER,
+  MODERATOR,
+  ADMIN,
+  TECHNICAL
+}
 
 @ObjectType()
 @Entity()
@@ -29,6 +40,22 @@ export class User extends BaseEntity {
 
   @Column()
   password!: string;
+
+  //@Field()
+  @OneToMany(() => Offer, offer => offer.owner)
+  offers: Offer[];
+
+  //@Field()
+  @OneToMany(() => Booking, booking => booking.occupant)
+  bookings: Booking[];
+
+  /*@Field()
+  @Column({
+    type: "enum",
+    enum: UserTypes,
+    default: UserTypes.DEFAULT
+  })
+  userType!: UserTypes;*/ // Gestion du userType à ajouter dans le resolver correspondant
 
   @Field(() => String)
   @CreateDateColumn()

@@ -1,0 +1,81 @@
+import {
+    BaseEntity,
+    Column,
+    Entity,
+    PrimaryGeneratedColumn,
+    ManyToOne, CreateDateColumn, UpdateDateColumn,
+} from "typeorm";
+import {Field, ObjectType, registerEnumType} from "type-graphql";
+import {Offer} from "./Offer";
+import {User} from "./User";
+
+export enum BookingStatuses {
+    WAITING_APPROVAL = 'WAITING_APPROVAL',
+    PAYMENT_PENDING = 'PAYMENT_PENDING',
+    CONFIRMED = 'CONFIRMED',
+    CANCELLED = 'CANCELLED'
+}
+
+export enum CancelReasons {
+    UNKNOWN = 'UNKNOWN',
+    OWNER_CANCELLATION = 'OWNER_CANCELLATION',
+    OCCUPANT_CANCELLATION = 'OCCUPANT_CANCELLATION',
+    PAYMENT_REFUSED = 'PAYMENT_REFUSED',
+    STAFF_CANCELLATION = 'STAFF_CANCELLATION'
+}
+
+registerEnumType(BookingStatuses, {
+    name: "BookingStatuses"
+});
+
+registerEnumType(CancelReasons, {
+    name: "CancelReasons"
+})
+
+@ObjectType()
+@Entity()
+export class Booking extends BaseEntity {
+    @Field()
+    @PrimaryGeneratedColumn()
+    id!: number;
+
+    //@Field()
+    @ManyToOne(() => Offer, offer => offer.bookings)
+    offer!: Offer;
+
+    //@Field()
+    @ManyToOne(() => User, user => user.bookings)
+    occupant!: User;
+
+    @Field()
+    @Column()
+    startDate!: Date;
+
+    @Field()
+    @Column()
+    endDate!: Date;
+
+    /*@Field(type => BookingStatuses)
+    @Column({
+        type: "enum",
+        enum: BookingStatuses,
+        default: BookingStatuses.WAITING_APPROVAL
+    })
+    status!: BookingStatuses;
+
+    @Field()
+    @Column({
+        type: "enum",
+        enum: CancelReasons,
+        default: CancelReasons.UNKNOWN
+    })
+    cancelReason: CancelReasons;*/
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @Field(() => String)
+    @UpdateDateColumn()
+    updatedAt: Date;
+}
