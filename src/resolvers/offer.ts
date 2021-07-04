@@ -1,6 +1,6 @@
-import { Query, Resolver, Arg, Mutation } from "type-graphql";
+import {Arg, Mutation, Query, Resolver} from "type-graphql";
 
-import {Offer/*, OfferStatuses*/} from "../entities/Offer";
+import {DeleteReasons, Offer, OfferStatuses} from "../entities/Offer";
 import {OfferType} from "../entities/OfferType";
 import {User} from "../entities/User";
 import {Criteria} from "../entities/Criteria";
@@ -9,12 +9,12 @@ import {Criteria} from "../entities/Criteria";
 export class OfferResolver {
   @Query(() => [Offer])
   offers(): Promise<Offer[]> {
-    return Offer.find();
+    return Offer.find({relations: ["user","offerType","booking"]});
   }
 
   @Query(() => Offer, { nullable: true })
   offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return Offer.findOne(id);
+    return Offer.findOne(id, {relations: ["user","offerType","booking"]});
   }
 
   @Mutation(() => Offer)
@@ -26,7 +26,8 @@ export class OfferResolver {
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
     @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[],
-    //@Arg("status", type => OfferStatuses) status: OfferStatuses,
+    @Arg("deleteReasons") deleteReason: DeleteReasons,
+    @Arg("status") status: OfferStatuses
   ): Promise<Offer | null> {
     const owner = await User.findOne(ownerId);
     if (!owner) {
@@ -54,9 +55,31 @@ export class OfferResolver {
       });
     }
 
-    // Faire vérifications sur les enums lorsque le fonctionnement sera confirmé
+    if(typeof deleteReason === "string")
+    {
+      if(!Object.values(DeleteReasons).includes(deleteReason))
+      {
+        deleteReason = DeleteReasons.UNKNOWN;
+      }
+    }
+    else
+    {
+      deleteReason = DeleteReasons.UNKNOWN;
+    }
 
-    return Offer.create({ title, description, latitude, longitude, owner, offerType, criterias/*, status*/ }).save();
+    if(typeof status === "string")
+    {
+      if(!Object.values(OfferStatuses).includes(status))
+      {
+        status = OfferStatuses.WAITING_APPROVAL;
+      }
+    }
+    else
+    {
+      status = OfferStatuses.WAITING_APPROVAL;
+    }
+
+    return Offer.create({ title, description, latitude, longitude, owner, offerType, criterias, status, deleteReason }).save();
   }
 
   @Mutation(() => Offer, { nullable: true })
@@ -68,8 +91,9 @@ export class OfferResolver {
     @Arg("longitude", () => Number, { nullable: true }) longitude: number,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
-    // Voir comment gérer les enums dans les arguments ici (status et deleteReason)
+    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[],
+    @Arg("status", { nullable: true }) status: OfferStatuses,
+    @Arg("deleteReason", { nullable: true }) deleteReason: DeleteReasons
   ): Promise<Offer | null> {
     const offer = await Offer.findOne(id);
     if (!offer) {
@@ -111,8 +135,20 @@ export class OfferResolver {
 
       offer.criterias = criterias;
     }
-
-    // Faire vérifications sur les enums lorsque le fonctionnement sera confirmé
+    if (typeof status === "string")
+    {
+      if(Object.values(OfferStatuses).includes(status))
+      {
+        offer.status = status;
+      }
+    }
+    if (typeof deleteReason === "string")
+    {
+      if(Object.values(DeleteReasons).includes(deleteReason))
+      {
+        offer.deleteReason = deleteReason;
+      }
+    }
 
     Offer.update({ id }, { ...offer });
     return offer;

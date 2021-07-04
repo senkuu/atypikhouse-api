@@ -39,23 +39,23 @@ export class Booking extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    //@Field()
+    @Field(() => Offer)
     @ManyToOne(() => Offer, offer => offer.bookings)
     offer!: Offer;
 
-    //@Field()
+    @Field(() => User)
     @ManyToOne(() => User, user => user.bookings)
     occupant!: User;
 
     @Field()
-    @Column()
+    @Column({type: "timestamp"})
     startDate!: Date;
 
     @Field()
-    @Column()
+    @Column({type: "timestamp"})
     endDate!: Date;
 
-    /*@Field(type => BookingStatuses)
+    @Field(/*type => BookingStatuses*/)
     @Column({
         type: "enum",
         enum: BookingStatuses,
@@ -63,13 +63,13 @@ export class Booking extends BaseEntity {
     })
     status!: BookingStatuses;
 
-    @Field()
+    @Field(/*() => CancelReasons*/)
     @Column({
         type: "enum",
         enum: CancelReasons,
         default: CancelReasons.UNKNOWN
     })
-    cancelReason: CancelReasons;*/
+    cancelReason!: CancelReasons;
 
     @Field(() => String)
     @CreateDateColumn()

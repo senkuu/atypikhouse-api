@@ -30,13 +30,13 @@ export class Criteria extends BaseEntity {
     @Column()
     additional: string;
 
-    /*@Field()
+    @Field()
     @Column({
         type: "enum",
         enum: CriteriaTypes,
         default: CriteriaTypes.INT
     })
-    criteriaType!: CriteriaTypes;*/
+    criteriaType!: CriteriaTypes;
 
     //@ManyToMany(type => OfferType, { cascade: true })
     //@Field()

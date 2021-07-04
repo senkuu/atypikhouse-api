@@ -1,29 +1,34 @@
-import { Query, Resolver, Arg, Mutation } from "type-graphql";
-import {Criteria/*, CriteriaTypes*/} from "../entities/Criteria";
+import {Arg, Mutation, Query, Resolver} from "type-graphql";
+import {Criteria, CriteriaTypes} from "../entities/Criteria";
 import {OfferType} from "../entities/OfferType";
 
 @Resolver()
 export class CriteriaResolver {
   @Query(() => [Criteria])
   criterias(): Promise<Criteria[]> {
-    return Criteria.find();
+    return Criteria.find({relations: ["offerType"]});
   }
 
   @Query(() => Criteria, { nullable: true })
   criteria(@Arg("id") id: number): Promise<Criteria | undefined> {
-    return Criteria.findOne(id);
+    return Criteria.findOne(id, {relations: ["offerType"]});
   }
 
   @Mutation(() => Criteria)
   async createCriteria(
     @Arg("name") name: string,
-    @Arg("additional") additional: string,
+    @Arg("additional", { nullable: true }) additional: string,
     @Arg("offerTypeIds", () => [Number], { nullable: true }) offerTypeIds: number[],
-    //@Arg("criteriaType", type => CriteriaTypes) criteriaType: CriteriaTypes,
+    @Arg("criteriaType") criteriaType: CriteriaTypes
   ): Promise<Criteria | null> {
-    if(typeof name === "undefined" || typeof additional === "undefined")
+    if(typeof name === "undefined")
     {
       return null;
+    }
+
+    if(typeof additional === "undefined")
+    {
+      additional = "";
     }
 
     let offerTypes: OfferType[] = [];
@@ -36,9 +41,19 @@ export class CriteriaResolver {
       });
     }
 
-    // Faire vérifications sur les enums lorsque le fonctionnement sera confirmé
+    if(typeof criteriaType === "string")
+    {
+      if(!Object.values(CriteriaTypes).includes(criteriaType))
+      {
+        criteriaType = CriteriaTypes.INT;
+      }
+    }
+    else
+    {
+      criteriaType = CriteriaTypes.INT;
+    }
 
-    return Criteria.create({ name, additional, offerTypes/*, criteriaType*/ }).save();
+    return Criteria.create({ name, additional, offerTypes, criteriaType }).save();
   }
 
   @Mutation(() => Criteria, { nullable: true })
@@ -47,7 +62,7 @@ export class CriteriaResolver {
     @Arg("name", () => String, { nullable: true }) name: string,
     @Arg("additional", () => String, { nullable: true }) additional: string,
     @Arg("offerTypeIds", () => [Number], { nullable: true }) offerTypeIds: number[],
-    // Voir comment gérer les enums dans les arguments ici (criteriaType)
+    @Arg("criteriaType", { nullable: true }) criteriaType: CriteriaTypes
   ): Promise<Criteria | null> {
     const criteria = await Criteria.findOne(id);
     if (!criteria) {
@@ -70,6 +85,13 @@ export class CriteriaResolver {
       });
 
       criteria.offerTypes = offerTypes;
+    }
+    if (typeof criteriaType === "string")
+    {
+      if(Object.values(CriteriaTypes).includes(criteriaType))
+      {
+        criteria.criteriaType = criteriaType;
+      }
     }
 
     Criteria.update({ id }, { ...criteria });

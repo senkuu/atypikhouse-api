@@ -1,6 +1,6 @@
-import { Query, Resolver, Arg, Mutation } from "type-graphql";
+import {Arg, Mutation, Query, Resolver} from "type-graphql";
 
-import { Booking } from "../entities/Booking";
+import {Booking, BookingStatuses, CancelReasons} from "../entities/Booking";
 //import {BookingStatuses, CancelReasons} from "../entities/Booking";
 import {Offer} from "../entities/Offer";
 import {User} from "../entities/User";
@@ -9,22 +9,22 @@ import {User} from "../entities/User";
 export class BookingResolver {
   @Query(() => [Booking])
   bookings(): Promise<Booking[]> {
-    return Booking.find();
+    return Booking.find({relations: ["offer","user"]});
   }
 
   @Query(() => Booking, { nullable: true })
   booking(@Arg("id") id: number): Promise<Booking | undefined> {
-    return Booking.findOne(id);
+    return Booking.findOne(id, {relations: ["offer", "user"]});
   }
 
   @Mutation(() => Booking)
   async createBooking(
-    @Arg("offer") offerId: number,
-    @Arg("occupant") occupantId: number,
+    @Arg("offerId") offerId: number,
+    @Arg("occupantId") occupantId: number,
     @Arg("startDate") startDate: Date,
     @Arg("endDate") endDate: Date,
-    /*@Arg("status", type => BookingStatuses) status: BookingStatuses,
-    @Arg("cancelReason", type => CancelReasons) cancelReason: CancelReasons,*/
+    @Arg("status") status: BookingStatuses,
+    @Arg("cancelReason") cancelReason: CancelReasons
 
   ): Promise<Booking | null> {
     const offer = await Offer.findOne(offerId);
@@ -43,9 +43,31 @@ export class BookingResolver {
       return null;
     }
 
-    // Faire vérifications sur les enums lorsque le fonctionnement sera confirmé
+    if(typeof status === "string")
+    {
+      if(!Object.values(BookingStatuses).includes(status))
+      {
+        status = BookingStatuses.WAITING_APPROVAL;
+      }
+    }
+    else
+    {
+      status = BookingStatuses.WAITING_APPROVAL;
+    }
 
-    return Booking.create({ offer, occupant, startDate, endDate/*, status, cancelReason*/ }).save();
+    if(typeof cancelReason === "string")
+    {
+      if(!Object.values(CancelReasons).includes(cancelReason))
+      {
+        cancelReason = CancelReasons.UNKNOWN;
+      }
+    }
+    else
+    {
+      cancelReason = CancelReasons.UNKNOWN;
+    }
+
+    return Booking.create({ offer, occupant, startDate, endDate, status, cancelReason }).save();
   }
 
   @Mutation(() => Booking, { nullable: true })
@@ -53,7 +75,8 @@ export class BookingResolver {
     @Arg("id") id: number,
     @Arg("startDate", () => Date, { nullable: true }) startDate: Date,
     @Arg("endDate", () => Date, { nullable: true }) endDate: Date,
-    // Voir comment gérer les enums dans les arguments ici (status et cancelReason)
+    @Arg("status", { nullable: true }) status: BookingStatuses,
+    @Arg("cancelReason", { nullable: true }) cancelReason: CancelReasons
   ): Promise<Booking | null> {
     const booking = await Booking.findOne(id);
     if (!booking) {
@@ -65,7 +88,19 @@ export class BookingResolver {
     if (typeof endDate !== "undefined") {
       booking.endDate = endDate;
     }
-    // Voir ici comment gérer les MaJ d'enums
+    if (typeof status === "string") {
+      if(Object.values(BookingStatuses).includes(status))
+      {
+        booking.status = status;
+      }
+    }
+    if (typeof cancelReason === "string") {
+      if(Object.values(CancelReasons).includes(cancelReason))
+      {
+        booking.cancelReason = cancelReason;
+      }
+    }
+
     Booking.update({ id }, { ...booking });
     return booking;
   }

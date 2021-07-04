@@ -12,21 +12,21 @@ import {Booking} from "./Booking";
 import {Criteria} from "./Criteria";
 
 export enum OfferStatuses {
-    WAITING_APPROVAL,
-    MODIFICATIONS_NEEDED,
-    REJECTED,
-    AVAILABLE,
-    DISABLED,
-    DELETED
+    WAITING_APPROVAL = 'WAITING_APPROVAL',
+    MODIFICATIONS_NEEDED = 'MODIFICATIONS_NEEDED',
+    REJECTED = 'REJECTED',
+    AVAILABLE = 'AVAILABLE',
+    DISABLED = 'DISABLED',
+    DELETED = 'DELETED'
 }
 
 export enum DeleteReasons {
-    UNKNOWN,
-    TC_NON_COMPLIANT, // Non conforme aux CGU
-    NOT_DISCLOSABLE,
-    STAFF_UNILATERAL,
-    OWNER_UNILATERAL,
-    DISPUTE
+    UNKNOWN = 'UNKNOWN',
+    TC_NON_COMPLIANT = 'TC_NON_COMPLIANT', // Non conforme aux CGU
+    NOT_DISCLOSABLE = 'NOT_DISCLOSABLE',
+    STAFF_UNILATERAL = 'STAFF_UNILATERAL',
+    OWNER_UNILATERAL = 'OWNER_UNILATERAL',
+    DISPUTE = 'DISPUTE'
 }
 
 @ObjectType()
@@ -52,15 +52,15 @@ export class Offer extends BaseEntity {
     @Column({ type: "decimal" }) // Vérifier si type ok
     longitude!: number;
 
-    //@Field()
+    @Field()
     @ManyToOne(() => User, user => user.offers)
     owner!: User;
 
-    //@Field()
+    @Field()
     @ManyToOne(() => OfferType, offerType => offerType.offers)
     offerType!: OfferType;
 
-    //@Field()
+    @Field(() => [Booking])
     @OneToMany(() => Booking, booking => booking.offer)
     bookings: Booking[];
 
@@ -70,7 +70,7 @@ export class Offer extends BaseEntity {
     @JoinTable()
     criterias: Criteria[];
 
-    /*@Field()
+    @Field()
     @Column({
         type: "enum",
         enum: OfferStatuses,
@@ -84,7 +84,7 @@ export class Offer extends BaseEntity {
         enum: DeleteReasons,
         default: DeleteReasons.UNKNOWN
     })
-    deleteReason: DeleteReasons;*/
+    deleteReason!: DeleteReasons;
 
     @Field(() => String)
     @CreateDateColumn()
