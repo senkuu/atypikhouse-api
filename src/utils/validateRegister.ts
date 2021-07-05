@@ -1,6 +1,7 @@
 import { isValidEmail } from "./isValidEmail";
 import { RegisterInput } from "../resolvers/RegisterInput";
 import { FieldError } from "../resolvers/FieldError";
+import {UserTypes} from "../entities/User";
 
 export const validateRegister = (options: RegisterInput): FieldError[] => {
   const errors: FieldError[] = [];
@@ -44,6 +45,14 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
     errors.push({
       field: "password",
       message: "Password must have at least 8 characters",
+    });
+  }
+
+  if (!Object.values(UserTypes).includes(options.userType))
+  {
+    errors.push({
+      field: "userType",
+      message: "User type is not valid",
     });
   }
 

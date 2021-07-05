@@ -52,7 +52,7 @@ export class Offer extends BaseEntity {
     @Column({ type: "decimal" }) // Vérifier si type ok
     longitude!: number;
 
-    @Field()
+    @Field(() => User)
     @ManyToOne(() => User, user => user.offers)
     owner!: User;
 

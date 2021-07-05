@@ -11,12 +11,12 @@ import {Offer} from "./Offer";
 import {Booking} from "./Booking";
 
 export enum UserTypes {
-  DEFAULT,
-  OWNER,
-  CERTIFIED_OWNER,
-  MODERATOR,
-  ADMIN,
-  TECHNICAL
+  DEFAULT = "default",
+  OWNER = "owner",
+  CERTIFIED_OWNER = "certifiedOwner",
+  MODERATOR = "moderator",
+  ADMIN = "admin",
+  TECHNICAL = "technical"
 }
 
 @ObjectType()
@@ -49,13 +49,13 @@ export class User extends BaseEntity {
   @OneToMany(() => Booking, booking => booking.occupant)
   bookings: Booking[];
 
-  /*@Field()
+  @Field()
   @Column({
     type: "enum",
     enum: UserTypes,
     default: UserTypes.DEFAULT
   })
-  userType!: UserTypes;*/ // Gestion du userType à ajouter dans le resolver correspondant
+  userType!: UserTypes;
 
   @Field(() => String)
   @CreateDateColumn()
