@@ -56,7 +56,7 @@ export class Offer extends BaseEntity {
     @ManyToOne(() => User, user => user.offers)
     owner!: User;
 
-    @Field()
+    @Field(() => OfferType)
     @ManyToOne(() => OfferType, offerType => offerType.offers)
     offerType!: OfferType;
 
