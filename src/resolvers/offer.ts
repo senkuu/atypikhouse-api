@@ -1,20 +1,20 @@
-import {Arg, Mutation, Query, Resolver} from "type-graphql";
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 
-import {DeleteReasons, Offer, OfferStatuses} from "../entities/Offer";
-import {OfferType} from "../entities/OfferType";
-import {User} from "../entities/User";
-import {Criteria} from "../entities/Criteria";
+import { DeleteReasons, Offer, OfferStatuses } from "../entities/Offer";
+import { OfferType } from "../entities/OfferType";
+import { User } from "../entities/User";
+import { Criteria } from "../entities/Criteria";
 
 @Resolver()
 export class OfferResolver {
   @Query(() => [Offer])
   offers(): Promise<Offer[]> {
-    return Offer.find({relations: ["owner","bookings","offerType"]});
+    return Offer.find({ relations: ["owner", "bookings", "offerType"] });
   }
 
   @Query(() => Offer, { nullable: true })
   offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return Offer.findOne(id, {relations: ["owner","bookings","offerType"]});
+    return Offer.findOne(id, { relations: ["owner", "bookings", "offerType"] });
   }
 
   @Mutation(() => Offer)
@@ -25,7 +25,8 @@ export class OfferResolver {
     @Arg("longitude") longitude: number,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[],
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[],
     @Arg("deleteReasons") deleteReason: DeleteReasons,
     @Arg("status") status: OfferStatuses
   ): Promise<Offer | null> {
@@ -40,14 +41,18 @@ export class OfferResolver {
     }
 
     // Faire des vérifications supplémentaires sur la validité ici ?
-    if(typeof title === "undefined" || typeof description === "undefined" || typeof latitude === "undefined" || typeof longitude === "undefined")
-    {
+    if (
+      typeof title === "undefined" ||
+      typeof description === "undefined" ||
+      typeof latitude === "undefined" ||
+      typeof longitude === "undefined"
+    ) {
       return null;
     }
 
     let criterias: Criteria[] = [];
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           criterias.push(criteria);
@@ -55,31 +60,33 @@ export class OfferResolver {
       });
     }
 
-    if(typeof deleteReason === "string")
-    {
-      if(!Object.values(DeleteReasons).includes(deleteReason))
-      {
+    if (typeof deleteReason === "string") {
+      if (!Object.values(DeleteReasons).includes(deleteReason)) {
         deleteReason = DeleteReasons.UNKNOWN;
       }
-    }
-    else
-    {
+    } else {
       deleteReason = DeleteReasons.UNKNOWN;
     }
 
-    if(typeof status === "string")
-    {
-      if(!Object.values(OfferStatuses).includes(status))
-      {
+    if (typeof status === "string") {
+      if (!Object.values(OfferStatuses).includes(status)) {
         status = OfferStatuses.WAITING_APPROVAL;
       }
-    }
-    else
-    {
+    } else {
       status = OfferStatuses.WAITING_APPROVAL;
     }
 
-    return Offer.create({ title, description, latitude, longitude, owner, offerType, criterias, status, deleteReason }).save();
+    return Offer.create({
+      title,
+      description,
+      latitude,
+      longitude,
+      owner,
+      offerType,
+      criterias,
+      status,
+      deleteReason,
+    }).save();
   }
 
   @Mutation(() => Offer, { nullable: true })
@@ -91,7 +98,8 @@ export class OfferResolver {
     @Arg("longitude", () => Number, { nullable: true }) longitude: number,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[],
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[],
     @Arg("status", { nullable: true }) status: OfferStatuses,
     @Arg("deleteReason", { nullable: true }) deleteReason: DeleteReasons
   ): Promise<Offer | null> {
@@ -123,10 +131,10 @@ export class OfferResolver {
         offer.offerType = offerType;
       }
     }
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       let criterias: Criteria[] = [];
 
-      criteriaIds.forEach(async id => {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           criterias.push(criteria);
@@ -135,17 +143,13 @@ export class OfferResolver {
 
       offer.criterias = criterias;
     }
-    if (typeof status === "string")
-    {
-      if(Object.values(OfferStatuses).includes(status))
-      {
+    if (typeof status === "string") {
+      if (Object.values(OfferStatuses).includes(status)) {
         offer.status = status;
       }
     }
-    if (typeof deleteReason === "string")
-    {
-      if(Object.values(DeleteReasons).includes(deleteReason))
-      {
+    if (typeof deleteReason === "string") {
+      if (Object.values(DeleteReasons).includes(deleteReason)) {
         offer.deleteReason = deleteReason;
       }
     }
@@ -156,16 +160,17 @@ export class OfferResolver {
 
   @Mutation(() => Offer, { nullable: true })
   async addOfferCriterias(
-      @Arg("id") id: number,
-      @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
+    @Arg("id") id: number,
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<Offer | null> {
     const offer = await Offer.findOne(id);
     if (!offer) {
       return null;
     }
 
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           offer.criterias.push(criteria);
@@ -179,19 +184,21 @@ export class OfferResolver {
 
   @Mutation(() => Offer, { nullable: true })
   async removeOfferCriterias(
-      @Arg("id") id: number,
-      @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
+    @Arg("id") id: number,
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<Offer | null> {
     const offer = await Offer.findOne(id);
     if (!offer) {
       return null;
     }
 
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
-        let criteriaIndex = offer.criterias.findIndex(criteria => criteria.id == id);
-        if(criteriaIndex > -1)
-        {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
+        let criteriaIndex = offer.criterias.findIndex(
+          (criteria) => criteria.id == id
+        );
+        if (criteriaIndex > -1) {
           offer.criterias.splice(criteriaIndex, 1);
         }
       });

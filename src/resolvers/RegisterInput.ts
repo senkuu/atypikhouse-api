@@ -1,5 +1,5 @@
 import { Field, InputType } from "type-graphql";
-import {UserTypes} from "../entities/User";
+import { UserTypes } from "../entities/User";
 
 @InputType()
 export class RegisterInput {
