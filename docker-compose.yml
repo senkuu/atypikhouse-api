@@ -33,6 +33,7 @@ services:
       - ./nginx-conf:/etc/nginx/conf.d
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
+      - dhparam:/etc/ssl/certs
     depends_on:
       - api
     networks:
@@ -60,7 +61,7 @@ services:
       - api_root:/var/www/html
     depends_on:
       - nginx
-    command: certonly --webroot --webroot-path=/var/www/html --email dorosario.enzo@gmail.com --agree-tos --no-eff-email --staging -d vps-f0007953.vps.ovh.net  -d vps-f0007953.vps.ovh.net
+    command: certonly --webroot --webroot-path=/var/www/html --email dorosario.enzo@gmail.com --agree-tos -d api.atypikhou.se
 
 volumes:
   atypikhouse-data:
@@ -71,7 +72,13 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/ubuntu/atypikhouse/
+      device: /home/ubuntu/api/
+      o: bind
+  dhparam:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/ubuntu/api/dhparam/
       o: bind
 
 networks:
