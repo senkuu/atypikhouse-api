@@ -6,8 +6,6 @@ services:
       - .env
     environment:
       NODE_ENV: production
-    ports:
-      - 4000:4000
     depends_on:
       - redis
       - database
@@ -26,7 +24,8 @@ services:
     image: nginx:mainline-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
     volumes:
       - api_root:/var/www/html
       - ./nginx-conf:/etc/nginx/conf.d
