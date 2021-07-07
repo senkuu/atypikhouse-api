@@ -56,7 +56,7 @@ services:
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/html
     depends_on:
-      - webserver
+      - api
     command: certonly --webroot --webroot-path=/var/www/html --email dorosario.enzo@gmail.com --agree-tos --no-eff-email --staging -d vps-f0007953.vps.ovh.net  -d vps-f0007953.vps.ovh.net
 
 volumes:
