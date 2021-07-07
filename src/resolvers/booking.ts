@@ -9,12 +9,12 @@ import {User} from "../entities/User";
 export class BookingResolver {
   @Query(() => [Booking])
   bookings(): Promise<Booking[]> {
-    return Booking.find({relations: ["offer","user"]});
+    return Booking.find({relations: ["offer","occupant"]});
   }
 
   @Query(() => Booking, { nullable: true })
   booking(@Arg("id") id: number): Promise<Booking | undefined> {
-    return Booking.findOne(id, {relations: ["offer", "user"]});
+    return Booking.findOne(id, {relations: ["offer", "occupant"]});
   }
 
   @Mutation(() => Booking)

@@ -9,12 +9,12 @@ import {Criteria} from "../entities/Criteria";
 export class OfferResolver {
   @Query(() => [Offer])
   offers(): Promise<Offer[]> {
-    return Offer.find({relations: ["user","offerType","booking"]});
+    return Offer.find({relations: ["owner","bookings","offerType"]});
   }
 
   @Query(() => Offer, { nullable: true })
   offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return Offer.findOne(id, {relations: ["user","offerType","booking"]});
+    return Offer.findOne(id, {relations: ["owner","bookings","offerType"]});
   }
 
   @Mutation(() => Offer)
