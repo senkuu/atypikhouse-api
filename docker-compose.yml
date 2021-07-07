@@ -20,6 +20,8 @@ services:
       - 5432:5432
     volumes:
       - atypikhouse-data:/var/lib/postgresql/data
+    networks:
+      - app-network
   nginx:
     image: nginx:mainline-alpine
     restart: unless-stopped
@@ -41,11 +43,15 @@ services:
       - 6379:6379
     volumes:
       - atypikhouse-redis:/data
+    networks:
+      - app-network
   adminer:
     image: adminer
     restart: always
     ports:
       - 8000:8080
+    networks:
+      - app-network
   certbot:
     image: certbot/certbot
     volumes:
