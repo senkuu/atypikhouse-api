@@ -11,6 +11,6 @@ export class RegisterInput {
   email: string;
   @Field()
   password: string;
-  @Field()
+  @Field({ nullable: true })
   userType: UserTypes;
 }
