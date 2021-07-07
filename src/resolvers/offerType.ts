@@ -1,6 +1,24 @@
-import { Query, Resolver, Arg, Mutation } from "type-graphql";
+import {
+  Query,
+  Resolver,
+  Arg,
+  Mutation,
+  ObjectType,
+  Field,
+} from "type-graphql";
 import { OfferType } from "../entities/OfferType";
 import { Criteria } from "../entities/Criteria";
+import { FieldError } from "./FieldError";
+import { validateOfferType } from "../utils/validateOfferType";
+
+@ObjectType()
+class OfferTypeResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+
+  @Field(() => OfferType, { nullable: true })
+  offerType?: OfferType;
+}
 
 @Resolver()
 export class OfferTypeResolver {
@@ -14,16 +32,21 @@ export class OfferTypeResolver {
     return OfferType.findOne(id);
   }
 
-  @Mutation(() => OfferType)
+  @Mutation(() => OfferTypeResponse)
   async createOfferType(
     @Arg("name") name: string,
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]
-  ): Promise<OfferType | null> {
-    if (typeof name === "undefined") {
-      return null;
+  ): Promise<OfferTypeResponse> {
+    const errors: FieldError[] = validateOfferType(name, criteriaIds);
+
+    if (errors.length > 0) {
+      return {
+        errors,
+      };
     }
 
+    // Voir comment tester ce bloc
     let criterias: Criteria[] = [];
     if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       criteriaIds.forEach(async (id) => {
@@ -34,7 +57,21 @@ export class OfferTypeResolver {
       });
     }
 
-    return OfferType.create({ name, criterias }).save();
+    let offerType;
+    try {
+      offerType = await OfferType.create({
+        name: name,
+        criterias: criterias,
+      }).save();
+    } catch (err) {
+      if (err.code === "23505" || err.detail.includes("already exists")) {
+        return {
+          errors: [{ field: "name", message: "Offer type already exists" }],
+        };
+      }
+    }
+
+    return { offerType };
   }
 
   @Mutation(() => OfferType, { nullable: true })
