@@ -48,11 +48,13 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
     });
   }
 
-  if (!Object.values(UserTypes).includes(options.userType)) {
-    errors.push({
-      field: "userType",
-      message: "User type is not valid",
-    });
+  if (typeof options.userType !== "undefined") {
+    if (!Object.values(UserTypes).includes(options.userType)) {
+      errors.push({
+        field: "userType",
+        message: "User type is not valid",
+      });
+    }
   }
 
   return errors;
