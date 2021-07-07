@@ -3,7 +3,9 @@ services:
   api:
     build: .
     env_file:
-      - .env.development
+      - .env
+    environment:
+      NODE_ENV: production
     ports:
       - 4000:4000
     depends_on:
