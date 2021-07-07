@@ -1,9 +1,8 @@
 #!/bin/sh
 
-ssh bebop@ip_du_serveur <<EOF
- cd ~/node-app
+ssh ubuntu@vps-f0007953.vps.ovh.net <<EOF
+ cd ~/api
  git pull
- npm install — production
- pm2 restart all
- exit
+ docker-compose build
+ docker-compose up -d --force-recreate --no-deps api
 EOF
