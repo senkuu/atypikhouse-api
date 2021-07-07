@@ -12,5 +12,5 @@ export class RegisterInput {
   @Field()
   password: string;
   @Field({ nullable: true })
-  userType: UserTypes;
+  userType?: UserTypes;
 }
