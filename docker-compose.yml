@@ -13,9 +13,9 @@ services:
     image: postgres
     restart: always
     environment:
-      POSTGRES_DATABASE: atypikhouse
-      POSTGRES_USER: atypikhouse
-      POSTGRES_PASSWORD: atypikhouse
+      POSTGRES_DATABASE: "${DB_NAME}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASS}"
     ports:
       - 5432:5432
     volumes:
