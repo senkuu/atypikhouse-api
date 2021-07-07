@@ -28,7 +28,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - web-root:/var/www/html
+      - api_root:/var/www/html
       - ./nginx-conf:/etc/nginx/conf.d
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
@@ -52,7 +52,7 @@ services:
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
-      - web-root:/var/www/html
+      - api_root:/var/www/html
     depends_on:
       - nginx
     command: certonly --webroot --webroot-path=/var/www/html --email dorosario.enzo@gmail.com --agree-tos --no-eff-email --staging -d vps-f0007953.vps.ovh.net  -d vps-f0007953.vps.ovh.net
