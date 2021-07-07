@@ -1,6 +1,6 @@
 import { Query, Resolver, Arg, Mutation } from "type-graphql";
-import {OfferType} from "../entities/OfferType";
-import {Criteria} from "../entities/Criteria";
+import { OfferType } from "../entities/OfferType";
+import { Criteria } from "../entities/Criteria";
 
 @Resolver()
 export class OfferTypeResolver {
@@ -17,16 +17,16 @@ export class OfferTypeResolver {
   @Mutation(() => OfferType)
   async createOfferType(
     @Arg("name") name: string,
-    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[],
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<OfferType | null> {
-    if(typeof name === "undefined")
-    {
+    if (typeof name === "undefined") {
       return null;
     }
 
     let criterias: Criteria[] = [];
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           criterias.push(criteria);
@@ -41,7 +41,8 @@ export class OfferTypeResolver {
   async updateOfferType(
     @Arg("id") id: number,
     @Arg("name", () => String, { nullable: true }) name: string,
-    @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<OfferType | null> {
     const offerType = await OfferType.findOne(id);
     if (!offerType) {
@@ -50,10 +51,10 @@ export class OfferTypeResolver {
     if (typeof name !== "undefined") {
       offerType.name = name;
     }
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       let criterias: Criteria[] = [];
 
-      criteriaIds.forEach(async id => {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           criterias.push(criteria);
@@ -69,16 +70,17 @@ export class OfferTypeResolver {
 
   @Mutation(() => OfferType, { nullable: true })
   async addOfferTypeCriterias(
-      @Arg("id") id: number,
-      @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
+    @Arg("id") id: number,
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<OfferType | null> {
     const offerType = await OfferType.findOne(id);
     if (!offerType) {
       return null;
     }
 
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           offerType.criterias.push(criteria);
@@ -92,19 +94,21 @@ export class OfferTypeResolver {
 
   @Mutation(() => OfferType, { nullable: true })
   async removeOfferTypeCriterias(
-      @Arg("id") id: number,
-      @Arg("criteriaIds", () => [Number], { nullable: true }) criteriaIds: number[]
+    @Arg("id") id: number,
+    @Arg("criteriaIds", () => [Number], { nullable: true })
+    criteriaIds: number[]
   ): Promise<OfferType | null> {
     const offerType = await OfferType.findOne(id);
     if (!offerType) {
       return null;
     }
 
-    if (typeof criteriaIds !== 'undefined' && criteriaIds.length > 0) {
-      criteriaIds.forEach(async id => {
-        let criteriaIndex = offerType.criterias.findIndex(criteria => criteria.id == id);
-        if(criteriaIndex > -1)
-        {
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      criteriaIds.forEach(async (id) => {
+        let criteriaIndex = offerType.criterias.findIndex(
+          (criteria) => criteria.id == id
+        );
+        if (criteriaIndex > -1) {
           offerType.criterias.splice(criteriaIndex, 1);
         }
       });

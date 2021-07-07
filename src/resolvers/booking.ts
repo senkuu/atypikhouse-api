@@ -1,20 +1,20 @@
-import {Arg, Mutation, Query, Resolver} from "type-graphql";
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 
-import {Booking, BookingStatuses, CancelReasons} from "../entities/Booking";
+import { Booking, BookingStatuses, CancelReasons } from "../entities/Booking";
 //import {BookingStatuses, CancelReasons} from "../entities/Booking";
-import {Offer} from "../entities/Offer";
-import {User} from "../entities/User";
+import { Offer } from "../entities/Offer";
+import { User } from "../entities/User";
 
 @Resolver()
 export class BookingResolver {
   @Query(() => [Booking])
   bookings(): Promise<Booking[]> {
-    return Booking.find({relations: ["offer","occupant"]});
+    return Booking.find({ relations: ["offer", "occupant"] });
   }
 
   @Query(() => Booking, { nullable: true })
   booking(@Arg("id") id: number): Promise<Booking | undefined> {
-    return Booking.findOne(id, {relations: ["offer", "occupant"]});
+    return Booking.findOne(id, { relations: ["offer", "occupant"] });
   }
 
   @Mutation(() => Booking)
@@ -25,7 +25,6 @@ export class BookingResolver {
     @Arg("endDate") endDate: Date,
     @Arg("status") status: BookingStatuses,
     @Arg("cancelReason") cancelReason: CancelReasons
-
   ): Promise<Booking | null> {
     const offer = await Offer.findOne(offerId);
     if (!offer) {
@@ -38,36 +37,34 @@ export class BookingResolver {
     }
 
     // Vérifier si utile, et le cas échéant si fonctionnel
-    if(typeof startDate === "undefined" || typeof endDate === "undefined")
-    {
+    if (typeof startDate === "undefined" || typeof endDate === "undefined") {
       return null;
     }
 
-    if(typeof status === "string")
-    {
-      if(!Object.values(BookingStatuses).includes(status))
-      {
+    if (typeof status === "string") {
+      if (!Object.values(BookingStatuses).includes(status)) {
         status = BookingStatuses.WAITING_APPROVAL;
       }
-    }
-    else
-    {
+    } else {
       status = BookingStatuses.WAITING_APPROVAL;
     }
 
-    if(typeof cancelReason === "string")
-    {
-      if(!Object.values(CancelReasons).includes(cancelReason))
-      {
+    if (typeof cancelReason === "string") {
+      if (!Object.values(CancelReasons).includes(cancelReason)) {
         cancelReason = CancelReasons.UNKNOWN;
       }
-    }
-    else
-    {
+    } else {
       cancelReason = CancelReasons.UNKNOWN;
     }
 
-    return Booking.create({ offer, occupant, startDate, endDate, status, cancelReason }).save();
+    return Booking.create({
+      offer,
+      occupant,
+      startDate,
+      endDate,
+      status,
+      cancelReason,
+    }).save();
   }
 
   @Mutation(() => Booking, { nullable: true })
@@ -89,14 +86,12 @@ export class BookingResolver {
       booking.endDate = endDate;
     }
     if (typeof status === "string") {
-      if(Object.values(BookingStatuses).includes(status))
-      {
+      if (Object.values(BookingStatuses).includes(status)) {
         booking.status = status;
       }
     }
     if (typeof cancelReason === "string") {
-      if(Object.values(CancelReasons).includes(cancelReason))
-      {
+      if (Object.values(CancelReasons).includes(cancelReason)) {
         booking.cancelReason = cancelReason;
       }
     }

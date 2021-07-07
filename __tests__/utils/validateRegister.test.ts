@@ -1,5 +1,5 @@
 import { validateRegister } from "../../src/utils/validateRegister";
-import {UserTypes} from "../../src/entities/User";
+import { UserTypes } from "../../src/entities/User";
 
 describe("validateRegister function", () => {
   it("should return an empty array when all entries are valid", () => {
@@ -8,7 +8,7 @@ describe("validateRegister function", () => {
       name: "John",
       surname: "Doe",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(validUser);
@@ -22,7 +22,7 @@ describe("validateRegister function", () => {
       name: "John",
       surname: "Doe",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -41,7 +41,7 @@ describe("validateRegister function", () => {
       name: "John",
       surname: "D",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -61,7 +61,7 @@ describe("validateRegister function", () => {
       surname:
         "InvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurnameInvalidSurname",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -80,7 +80,7 @@ describe("validateRegister function", () => {
       name: "J",
       surname: "Doe",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -100,7 +100,7 @@ describe("validateRegister function", () => {
         "invalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsernameinvalidUsername",
       surname: "Doe",
       password: "validPassword",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -119,7 +119,7 @@ describe("validateRegister function", () => {
       name: "John",
       surname: "Doe",
       password: "invalid",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
@@ -138,7 +138,7 @@ describe("validateRegister function", () => {
       name: "John",
       surname: "Doe",
       password: "validPassword",
-      userType: "InvalidType" as UserTypes
+      userType: "InvalidType" as UserTypes,
     };
 
     const errors = validateRegister(invalidUser);
@@ -157,7 +157,7 @@ describe("validateRegister function", () => {
       name: "J",
       surname: "Doe",
       password: "invalid",
-      userType: UserTypes.DEFAULT
+      userType: UserTypes.DEFAULT,
     };
 
     const errors = validateRegister(invalidUser);
