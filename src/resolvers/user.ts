@@ -13,7 +13,7 @@ import argon2 from "argon2";
 import { v4 } from "uuid";
 
 import { MyContext } from "../types";
-import { User } from "../entities/User";
+import { User, UserTypes } from "../entities/User";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 
 // import utils
@@ -78,6 +78,7 @@ export class UserResolver {
         surname: options.surname,
         email: options.email,
         password: hashedPassword,
+        userType: options.userType ?? UserTypes.DEFAULT,
       }).save();
     } catch (err) {
       if (err.code === "23505" || err.detail.includes("already exists")) {
