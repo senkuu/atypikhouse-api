@@ -62,11 +62,11 @@ volumes:
   atypikhouse-redis:
   certbot-etc:
   certbot-var:
-  web-root:
+  api_root:
     driver: local
     driver_opts:
       type: none
-      device: /home/ubuntu/node_project/views/
+      device: /home/ubuntu/atypikhouse/
       o: bind
 
 networks:
