@@ -11,6 +11,8 @@ services:
     depends_on:
       - redis
       - database
+    networks:
+      - app-network
   database:
     image: postgres
     restart: always
@@ -20,6 +22,21 @@ services:
       - 5432:5432
     volumes:
       - atypikhouse-data:/var/lib/postgresql/data
+  webserver:
+    image: nginx:mainline-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - web-root:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+    depends_on:
+      - api
+    networks:
+      - app-network
   redis:
     image: "redis:alpine"
     ports:
@@ -31,6 +48,29 @@ services:
     restart: always
     ports:
       - 8000:8080
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    depends_on:
+      - webserver
+    command: certonly --webroot --webroot-path=/var/www/html --email dorosario.enzo@gmail.com --agree-tos --no-eff-email --staging -d vps-f0007953.vps.ovh.net  -d vps-f0007953.vps.ovh.net
+
 volumes:
   atypikhouse-data:
   atypikhouse-redis:
+  certbot-etc:
+  certbot-var:
+  web-root:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/ubuntu/node_project/views/
+      o: bind
+
+networks:
+  app-network:
+    driver: bridge
