@@ -46,6 +46,13 @@ export class OfferResolver {
     }
 
     let offers = await Offer.find({ relations });
+
+    //TODO: Trouver une manière plus propre ?
+    offers.forEach((offer) => {
+      offer.latitude = offer.coordinates.coordinates[0];
+      offer.longitude = offer.coordinates.coordinates[1];
+    });
+
     console.log(offers);
 
     let calculateDistances = false;

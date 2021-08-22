@@ -67,6 +67,12 @@ export class Offer extends BaseEntity {
   })
   coordinates: Point;
 
+  @Field({ nullable: true })
+  latitude: number;
+
+  @Field({ nullable: true })
+  longitude: number;
+
   @Field()
   @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
   touristTax!: number; // = Taxe de séjour
