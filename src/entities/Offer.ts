@@ -42,7 +42,7 @@ export class Offer extends BaseEntity {
   id!: number;
 
   @Field()
-  @Column({ unique: true })
+  @Column()
   title!: string;
 
   @Field()

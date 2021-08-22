@@ -6,6 +6,7 @@ import express from "express";
 import session from "express-session";
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
+import path from "path";
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -29,7 +30,7 @@ import {CriteriaResolver} from "./resolvers/criteria";
 import {OfferTypeResolver} from "./resolvers/offerType";
 
 const main = async () => {
-  await createConnection({
+  const connection = await createConnection({
     type: "postgres",
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
@@ -37,8 +38,10 @@ const main = async () => {
     password: process.env.DB_PASSWORD,
     logging: true,
     synchronize: true,
+    migrations: [path.join(__dirname, "./migrations/*")],
     entities: [Offer, User, Booking, Criteria, OfferType],
   });
+  await connection.runMigrations();
 
   const app = express();
 
