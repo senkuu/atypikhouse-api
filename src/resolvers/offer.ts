@@ -12,9 +12,9 @@ import { Point, Position } from "geojson";
 import { City } from "../entities/City";
 import {
   calculateOfferDistances,
-  distanceBetweenPoints,
+  calculateOfferScores,
   sortOffersByDistance,
-} from "../utils/coordsDistance";
+} from "../utils/sortOffers";
 
 @Resolver()
 export class OfferResolver {
@@ -23,17 +23,28 @@ export class OfferResolver {
   async offers(
     @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
     @Arg("cityId", { nullable: true }) cityId: number,
-    @Arg("getCities", { nullable: true }) getCities: boolean
+    @Arg("getCities", { nullable: true }) getCities: boolean,
+    @Arg("getDepartements", { nullable: true }) getDepartements: boolean
   ): Promise<Offer[]> {
     let relations = ["owner", "bookings", "offerType", "offerCriterias"];
 
-    if (typeof getCities !== "undefined" && getCities) {
+    if (
+      (typeof getCities !== "undefined" && getCities) ||
+      (typeof getDepartements !== "undefined" && getDepartements)
+    ) {
       relations.push("city");
+
+      if (typeof getDepartements !== "undefined" && getDepartements) {
+        relations.push("city.departement");
+      }
     }
 
     let offers = await Offer.find({ relations });
     console.log(offers);
 
+    let calculateDistances = false;
+    let cityFound = false;
+    let originPoint: Position = [];
     if (
       typeof coordinates !== "undefined" &&
       coordinates.latitude >= -90 &&
@@ -41,29 +52,41 @@ export class OfferResolver {
       coordinates.longitude >= -180 &&
       coordinates.longitude <= 180
     ) {
-      const originPoint: Position = [
-        coordinates.latitude,
-        coordinates.longitude,
-      ];
-
-      offers = calculateOfferDistances(originPoint, offers);
-      offers = sortOffersByDistance(offers);
+      originPoint = [coordinates.latitude, coordinates.longitude];
+      calculateDistances = true;
     } else if (typeof cityId !== "undefined") {
       const city = await City.findOne(cityId);
       if (city) {
-        offers = calculateOfferDistances(city.coordinates.coordinates, offers);
-        offers = sortOffersByDistance(offers);
+        originPoint = city.coordinates.coordinates;
+        calculateDistances = true;
+        cityFound = true;
       }
     }
 
-    console.log(offers[2].coordinates.coordinates[0]);
+    if (calculateDistances) {
+      console.log("CALC DISTANCES");
+      offers = calculateOfferDistances(originPoint, offers);
+      offers = sortOffersByDistance(offers);
+
+      offers = cityFound
+        ? calculateOfferScores(offers, true, cityId)
+        : calculateOfferScores(offers, true);
+    }
+
     return offers;
   }
 
   @Query(() => Offer, { nullable: true })
   async offer(@Arg("id") id: number): Promise<Offer | undefined> {
     return await Offer.findOne(id, {
-      relations: ["owner", "bookings", "offerType", "offerCriterias"],
+      relations: [
+        "owner",
+        "bookings",
+        "offerType",
+        "offerCriterias",
+        "city",
+        "city.departement",
+      ],
     });
   }
 

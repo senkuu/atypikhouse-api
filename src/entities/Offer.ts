@@ -74,6 +74,9 @@ export class Offer extends BaseEntity {
   @Field({ nullable: true })
   distance: number;
 
+  @Field({ nullable: true })
+  sortScore: number;
+
   @Field()
   @ManyToOne(() => City, (city) => city.offers)
   city!: City;

@@ -24,11 +24,8 @@ export class City extends BaseEntity {
   @Column()
   name!: string;
 
-  // TODO : Enlever "eager" ici
   @Field(() => Departement)
-  @ManyToOne(() => Departement, (departement) => departement.cities, {
-    eager: true,
-  })
+  @ManyToOne(() => Departement, (departement) => departement.cities)
   departement!: Departement;
 
   @Field(() => [Offer])
