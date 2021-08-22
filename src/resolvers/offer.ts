@@ -7,6 +7,8 @@ import { Criteria } from "../entities/Criteria";
 import { CriteriaInput } from "./CriteriaInput";
 import { OfferCriteria } from "../entities/OfferCriteria";
 import { BooleanValues } from "./CriteriaInput";
+import { CoordinatesInput } from "./CoordinatesInput";
+import { Point } from "geojson";
 
 @Resolver()
 export class OfferResolver {
@@ -30,8 +32,10 @@ export class OfferResolver {
   async createOffer(
     @Arg("title") title: string,
     @Arg("description") description: string,
-    @Arg("latitude") latitude: number,
-    @Arg("longitude") longitude: number,
+    @Arg("coordinates", () => CoordinatesInput, { nullable: true })
+    coordinates: CoordinatesInput,
+    @Arg("address") address: string,
+    @Arg("city") city: string,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
@@ -41,22 +45,58 @@ export class OfferResolver {
   ): Promise<Offer | null> {
     const owner = await User.findOne(ownerId);
     if (!owner) {
+      console.log("SORTIE 1");
       return null;
     }
 
     const offerType = await OfferType.findOne(offerTypeId);
     if (!offerType) {
+      console.log("SORTIE 2");
       return null;
     }
 
     // Faire des vérifications supplémentaires sur la validité ici ?
-    if (
-      typeof title === "undefined" ||
-      typeof description === "undefined" ||
-      typeof latitude === "undefined" ||
-      typeof longitude === "undefined"
-    ) {
+    if (typeof title === "undefined" || typeof description === "undefined") {
+      console.log("SORTIE 3");
       return null;
+    }
+
+    // Préparation de la définition des coordonnées
+    let formattedCoordinates: Point | null;
+    // Si elles ne sont pas définies dans la requête, on
+    if (
+      typeof coordinates === "undefined" ||
+      coordinates.latitude < -90 ||
+      coordinates.latitude > 90 ||
+      coordinates.longitude < -180 ||
+      coordinates.longitude > 180
+    ) {
+      let geoData = null;
+      if (typeof address !== "undefined" && typeof city !== "undefined") {
+        await fetch(
+          "https://api-adresse.data.gouv.fr/search/?q=" +
+            encodeURI(address) +
+            ",+" +
+            encodeURI(city)
+        ).then(async (result) => {
+          if (result.ok) {
+            geoData = await result.json();
+          }
+        });
+
+        if (geoData === null || geoData.features.length === 0) {
+          return null;
+        }
+
+        formattedCoordinates = geoData.features[0].geometry;
+      }
+
+      formattedCoordinates = null; // TODO : vérifier si fonctionnel (erreur obtenue : Cannot return null for non-nullable field Mutation.createOffer.)
+    } else {
+      formattedCoordinates = {
+        type: "Point",
+        coordinates: [coordinates.latitude, coordinates.longitude],
+      };
     }
 
     let offerCriterias: OfferCriteria[] = [];
@@ -86,11 +126,11 @@ export class OfferResolver {
       status = OfferStatuses.WAITING_APPROVAL;
     }
 
+    console.log("MAIN SORTIE");
     return Offer.create({
       title,
       description,
-      latitude,
-      longitude,
+      coordinates: formattedCoordinates,
       owner,
       offerType,
       offerCriterias,
@@ -104,8 +144,8 @@ export class OfferResolver {
     @Arg("id") id: number,
     @Arg("title", () => String, { nullable: true }) title: string,
     @Arg("description", () => String, { nullable: true }) description: string,
-    @Arg("latitude", () => Number, { nullable: true }) latitude: number,
-    @Arg("longitude", () => Number, { nullable: true }) longitude: number,
+    @Arg("coordinates", () => CoordinatesInput, { nullable: true })
+    coordinates: CoordinatesInput,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
@@ -123,11 +163,17 @@ export class OfferResolver {
     if (typeof description !== "undefined") {
       offer.description = description;
     }
-    if (typeof latitude !== "undefined") {
-      offer.latitude = latitude;
-    }
-    if (typeof longitude !== "undefined") {
-      offer.longitude = longitude;
+    if (
+      typeof coordinates !== "undefined" &&
+      coordinates.latitude >= -90 &&
+      coordinates.latitude <= 90 &&
+      coordinates.longitude >= -180 &&
+      coordinates.longitude <= 180
+    ) {
+      offer.coordinates = {
+        type: "Point",
+        coordinates: [coordinates.latitude, coordinates.longitude],
+      };
     }
     if (typeof ownerId !== "undefined") {
       const owner = await User.findOne(ownerId);

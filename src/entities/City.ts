@@ -5,11 +5,13 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
+  Index,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { Departement } from "./Departement";
 import { Offer } from "./Offer";
 import { User } from "./User";
+import { Point } from "geojson";
 
 @ObjectType()
 @Entity()
@@ -37,6 +39,16 @@ export class City extends BaseEntity {
   @Field()
   @Column()
   population!: number;
+
+  @Field(() => String)
+  @Index({ spatial: true })
+  @Column({
+    type: "geography",
+    spatialFeatureType: "Point",
+    srid: 4326,
+    nullable: true,
+  })
+  coordinates: Point;
 
   @Field(() => [User])
   @OneToMany(() => User, (user) => user.city)

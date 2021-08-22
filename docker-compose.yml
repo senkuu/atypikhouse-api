@@ -10,7 +10,7 @@ services:
       - redis
       - database
   database:
-    image: postgres
+    image: postgis/postgis:latest
     restart: always
     environment:
       POSTGRES_DATABASE: atypikhouse

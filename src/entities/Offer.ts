@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  Index,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
@@ -16,6 +17,21 @@ import { OfferCriteria } from "./OfferCriteria";
 import { City } from "./City";
 import { Photo } from "./Photo";
 import { Planning } from "./Planning";
+//import { CoordinatesInput } from "../resolvers/CoordinatesInput";
+import { Point } from "geojson";
+import { GraphQLInputObjectType } from "graphql";
+
+const geoSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["Point"],
+    required: true,
+  },
+  coordinates: {
+    type: [Number],
+    required: true,
+  },
+});
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -48,15 +64,21 @@ export class Offer extends BaseEntity {
 
   @Field()
   @Column({ type: "text" })
-  description!: string;
+  description: string;
 
   @Field()
-  @Column({ type: "decimal" }) // Vérifier si type ok
-  latitude!: number;
+  @Column({ nullable: true })
+  address: string;
 
-  @Field()
-  @Column({ type: "decimal" }) // Vérifier si type ok
-  longitude!: number;
+  @Field(() => GraphQLInputObjectType)
+  @Index({ spatial: true })
+  @Column({
+    type: "geography",
+    spatialFeatureType: "Point",
+    srid: 4326,
+    nullable: true,
+  })
+  coordinates: Point;
 
   @Field()
   @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
