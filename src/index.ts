@@ -24,9 +24,12 @@ import { UserResolver } from "./resolvers/user";
 
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { MyContext } from "./types";
-import {BookingResolver} from "./resolvers/booking";
-import {CriteriaResolver} from "./resolvers/criteria";
-import {OfferTypeResolver} from "./resolvers/offerType";
+import { BookingResolver } from "./resolvers/booking";
+import { CriteriaResolver } from "./resolvers/criteria";
+import { OfferTypeResolver } from "./resolvers/offerType";
+import { City } from "./entities/City";
+import { Departement } from "./entities/Departement";
+import { Region } from "./entities/Region";
 
 const main = async () => {
   await createConnection({
@@ -37,7 +40,16 @@ const main = async () => {
     password: process.env.DB_PASSWORD,
     logging: true,
     synchronize: true,
-    entities: [Offer, User, Booking, Criteria, OfferType],
+    entities: [
+      Offer,
+      User,
+      Booking,
+      Criteria,
+      OfferType,
+      City,
+      Departement,
+      Region,
+    ],
   });
 
   const app = express();
@@ -77,6 +89,14 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [HelloResolvers, OfferResolver, UserResolver, BookingResolver, CriteriaResolver, OfferTypeResolver],
+      resolvers: [
+        HelloResolvers,
+        OfferResolver,
+        UserResolver,
+        BookingResolver,
+        CriteriaResolver,
+        OfferTypeResolver,
+      ],
       validate: false,
     }),
     context: ({ req, res }): MyContext => ({ req, res, redis }),

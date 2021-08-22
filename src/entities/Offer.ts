@@ -7,14 +7,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  ManyToMany,
-  JoinTable,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
 import { User } from "./User";
 import { Booking } from "./Booking";
 import { Criteria } from "./Criteria";
+import { City } from "./City";
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -56,6 +55,10 @@ export class Offer extends BaseEntity {
   @Field()
   @Column({ type: "decimal" }) // Vérifier si type ok
   longitude!: number;
+
+  @Field()
+  @ManyToOne(() => City, (city) => city.offers)
+  city!: City;
 
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.offers)

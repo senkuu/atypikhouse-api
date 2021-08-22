@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -10,6 +11,7 @@ import {
 import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
+import { City } from "./City";
 
 export enum UserTypes {
   DEFAULT = "default",
@@ -49,6 +51,10 @@ export class User extends BaseEntity {
   //@Field()
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
+
+  @Field(() => City)
+  @ManyToOne(() => City, (city) => city.users)
+  city!: City;
 
   @Field()
   @Column({
