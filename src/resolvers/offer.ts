@@ -8,23 +8,62 @@ import { CriteriaInput } from "./CriteriaInput";
 import { OfferCriteria } from "../entities/OfferCriteria";
 import { BooleanValues } from "./CriteriaInput";
 import { CoordinatesInput } from "./CoordinatesInput";
-import { Point } from "geojson";
+import { Point, Position } from "geojson";
+import { City } from "../entities/City";
+import {
+  calculateOfferDistances,
+  distanceBetweenPoints,
+  sortOffersByDistance,
+} from "../utils/coordsDistance";
 
 @Resolver()
 export class OfferResolver {
+  // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus
   @Query(() => [Offer])
-  offers(): Promise<Offer[]> {
-    let offers = Offer.find({
-      relations: ["owner", "bookings", "offerType", "criterias"],
-    });
+  async offers(
+    @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
+    @Arg("cityId", { nullable: true }) cityId: number,
+    @Arg("getCities", { nullable: true }) getCities: boolean
+  ): Promise<Offer[]> {
+    let relations = ["owner", "bookings", "offerType", "offerCriterias"];
+
+    if (typeof getCities !== "undefined" && getCities) {
+      relations.push("city");
+    }
+
+    let offers = await Offer.find({ relations });
     console.log(offers);
+
+    if (
+      typeof coordinates !== "undefined" &&
+      coordinates.latitude >= -90 &&
+      coordinates.latitude <= 90 &&
+      coordinates.longitude >= -180 &&
+      coordinates.longitude <= 180
+    ) {
+      const originPoint: Position = [
+        coordinates.latitude,
+        coordinates.longitude,
+      ];
+
+      offers = calculateOfferDistances(originPoint, offers);
+      offers = sortOffersByDistance(offers);
+    } else if (typeof cityId !== "undefined") {
+      const city = await City.findOne(cityId);
+      if (city) {
+        offers = calculateOfferDistances(city.coordinates.coordinates, offers);
+        offers = sortOffersByDistance(offers);
+      }
+    }
+
+    console.log(offers[2].coordinates.coordinates[0]);
     return offers;
   }
 
   @Query(() => Offer, { nullable: true })
-  offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return Offer.findOne(id, {
-      relations: ["owner", "bookings", "offerType", "criterias"],
+  async offer(@Arg("id") id: number): Promise<Offer | undefined> {
+    return await Offer.findOne(id, {
+      relations: ["owner", "bookings", "offerType", "offerCriterias"],
     });
   }
 
@@ -34,8 +73,8 @@ export class OfferResolver {
     @Arg("description") description: string,
     @Arg("coordinates", () => CoordinatesInput, { nullable: true })
     coordinates: CoordinatesInput,
-    @Arg("address") address: string,
-    @Arg("city") city: string,
+    @Arg("address", { nullable: true }) address: string,
+    @Arg("cityId") cityId: number,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
@@ -62,8 +101,9 @@ export class OfferResolver {
     }
 
     // Préparation de la définition des coordonnées
+    // ATTENTION : Coordonnées temporairement obligatoires !
     let formattedCoordinates: Point | null;
-    // Si elles ne sont pas définies dans la requête, on
+    // TODO : A commenter et continuer pour la définition des coordonnées, de l'adresse et de la commune
     if (
       typeof coordinates === "undefined" ||
       coordinates.latitude < -90 ||
@@ -71,7 +111,8 @@ export class OfferResolver {
       coordinates.longitude < -180 ||
       coordinates.longitude > 180
     ) {
-      let geoData = null;
+      return null;
+      /*let geoData = null;
       if (typeof address !== "undefined" && typeof city !== "undefined") {
         await fetch(
           "https://api-adresse.data.gouv.fr/search/?q=" +
@@ -91,13 +132,34 @@ export class OfferResolver {
         formattedCoordinates = geoData.features[0].geometry;
       }
 
-      formattedCoordinates = null; // TODO : vérifier si fonctionnel (erreur obtenue : Cannot return null for non-nullable field Mutation.createOffer.)
+      formattedCoordinates = null;*/ // TODO : vérifier si fonctionnel (erreur obtenue : Cannot return null for non-nullable field Mutation.createOffer.)
     } else {
       formattedCoordinates = {
         type: "Point",
         coordinates: [coordinates.latitude, coordinates.longitude],
       };
     }
+
+    // TODO : A modifier lorsque l'exploitation des coordonnées sera entièrement fonctionnelle, pour relier les vérifications entre les deux
+    // Enregistrement de la ville (l'ID doit d'abord être récupéré via cities)
+    // ATTENTION : champ ville temporairement obligatoire en attendant la gestion des coordonnées
+    const city = await City.findOne(cityId);
+    if (!city) {
+      return null;
+    }
+    /*let city: City | null;
+    if (typeof cityId !== "undefined") {
+      let foundCity = await City.findOne(cityId);
+      if (typeof foundCity === "undefined") {
+        city = null;
+      }
+    }*/
+
+    // TODO : Même chose que pour la ville
+    // Enregistrement simple de l'adresse
+    /*if (typeof address === "undefined") {
+      address = null;
+    }*/
 
     let offerCriterias: OfferCriteria[] = [];
     // TODO : Supprimé car la gestion de l'ajout des critères est complexe. Voir si call de la fonction d'ajout à faire ici une fois l'entité sauvegardée, ou si on appelle la création des critères en front une fois l'offre créée
@@ -131,6 +193,8 @@ export class OfferResolver {
       title,
       description,
       coordinates: formattedCoordinates,
+      city,
+      address,
       owner,
       offerType,
       offerCriterias,

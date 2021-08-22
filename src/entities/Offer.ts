@@ -19,19 +19,6 @@ import { Photo } from "./Photo";
 import { Planning } from "./Planning";
 //import { CoordinatesInput } from "../resolvers/CoordinatesInput";
 import { Point } from "geojson";
-import { GraphQLInputObjectType } from "graphql";
-
-const geoSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: ["Point"],
-    required: true,
-  },
-  coordinates: {
-    type: [Number],
-    required: true,
-  },
-});
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -70,19 +57,22 @@ export class Offer extends BaseEntity {
   @Column({ nullable: true })
   address: string;
 
-  @Field(() => GraphQLInputObjectType)
+  // // TODO: Implémenter les coordonnées en tant que champ
+  //@Field(() => GeoJSONPoint)
   @Index({ spatial: true })
   @Column({
     type: "geography",
     spatialFeatureType: "Point",
     srid: 4326,
-    nullable: true,
   })
   coordinates: Point;
 
   @Field()
   @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
   touristTax!: number; // = Taxe de séjour
+
+  @Field({ nullable: true })
+  distance: number;
 
   @Field()
   @ManyToOne(() => City, (city) => city.offers)

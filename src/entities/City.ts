@@ -24,8 +24,11 @@ export class City extends BaseEntity {
   @Column()
   name!: string;
 
+  // TODO : Enlever "eager" ici
   @Field(() => Departement)
-  @ManyToOne(() => Departement, (departement) => departement.cities)
+  @ManyToOne(() => Departement, (departement) => departement.cities, {
+    eager: true,
+  })
   departement!: Departement;
 
   @Field(() => [Offer])
@@ -40,7 +43,8 @@ export class City extends BaseEntity {
   @Column()
   population!: number;
 
-  @Field(() => String)
+  // TODO: Implémenter les coordonnées en tant que champ
+  //@Field(() => GeoJSONPoint)
   @Index({ spatial: true })
   @Column({
     type: "geography",
