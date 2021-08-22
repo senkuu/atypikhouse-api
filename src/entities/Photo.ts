@@ -26,7 +26,7 @@ export class Photo extends BaseEntity {
   url!: string;
 
   @Field(() => User)
-  @ManyToOne(() => User, (user) => user.reviews)
+  @OneToOne(() => User, (user) => user.photo)
   user!: User;
 
   @Field()

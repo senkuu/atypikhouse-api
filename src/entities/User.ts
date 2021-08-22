@@ -3,8 +3,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -13,6 +15,7 @@ import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { City } from "./City";
 import { Notice } from "./Notice";
+import { Photo } from "./Photo";
 
 export enum UserTypes {
   DEFAULT = "default",
@@ -64,6 +67,12 @@ export class User extends BaseEntity {
   @Field(() => [Notice])
   @OneToMany(() => Notice, (notice) => notice.linkedUser)
   linkedNotices: Notice[];
+
+  // Photo de profil
+  @Field(() => Photo)
+  @OneToOne(() => Photo, (photo) => photo.user)
+  @JoinColumn()
+  photo!: Photo;
 
   @Field()
   @Column({
