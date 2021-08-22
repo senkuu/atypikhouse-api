@@ -23,12 +23,11 @@ export class OfferType extends BaseEntity {
   @Column({ unique: true })
   name!: string;
 
-  //@Field()
+  @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.offerType)
   offers: Offer[];
 
-  //@ManyToMany(type => Criteria, { cascade: true })
-  //@Field()
+  @Field(() => [Criteria])
   @ManyToMany(() => Criteria, (criteria) => criteria.offerTypes)
   criterias: Criteria[];
 

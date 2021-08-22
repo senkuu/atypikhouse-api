@@ -4,17 +4,26 @@ import { DeleteReasons, Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
+import { CriteriaInput } from "./CriteriaInput";
+import { OfferCriteria } from "../entities/OfferCriteria";
+import { BooleanValues } from "./CriteriaInput";
 
 @Resolver()
 export class OfferResolver {
   @Query(() => [Offer])
   offers(): Promise<Offer[]> {
-    return Offer.find({ relations: ["owner", "bookings", "offerType"] });
+    let offers = Offer.find({
+      relations: ["owner", "bookings", "offerType", "criterias"],
+    });
+    console.log(offers);
+    return offers;
   }
 
   @Query(() => Offer, { nullable: true })
   offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return Offer.findOne(id, { relations: ["owner", "bookings", "offerType"] });
+    return Offer.findOne(id, {
+      relations: ["owner", "bookings", "offerType", "criterias"],
+    });
   }
 
   @Mutation(() => Offer)
@@ -25,8 +34,8 @@ export class OfferResolver {
     @Arg("longitude") longitude: number,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[],
+    //@Arg("criteriaIds", () => [Number], { nullable: true })
+    //criteriaIds: number[],
     @Arg("deleteReasons") deleteReason: DeleteReasons,
     @Arg("status") status: OfferStatuses
   ): Promise<Offer | null> {
@@ -50,15 +59,16 @@ export class OfferResolver {
       return null;
     }
 
-    let criterias: Criteria[] = [];
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+    let offerCriterias: OfferCriteria[] = [];
+    // TODO : Supprimé car la gestion de l'ajout des critères est complexe. Voir si call de la fonction d'ajout à faire ici une fois l'entité sauvegardée, ou si on appelle la création des critères en front une fois l'offre créée
+    /*if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
           criterias.push(criteria);
         }
       });
-    }
+    }*/
 
     if (typeof deleteReason === "string") {
       if (!Object.values(DeleteReasons).includes(deleteReason)) {
@@ -83,7 +93,7 @@ export class OfferResolver {
       longitude,
       owner,
       offerType,
-      criterias,
+      offerCriterias,
       status,
       deleteReason,
     }).save();
@@ -98,8 +108,8 @@ export class OfferResolver {
     @Arg("longitude", () => Number, { nullable: true }) longitude: number,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[],
+    //@Arg("criteriaIds", () => [Number], { nullable: true })
+    //criteriaIds: number[],
     @Arg("status", { nullable: true }) status: OfferStatuses,
     @Arg("deleteReason", { nullable: true }) deleteReason: DeleteReasons
   ): Promise<Offer | null> {
@@ -131,7 +141,8 @@ export class OfferResolver {
         offer.offerType = offerType;
       }
     }
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+    // TODO : Supprimé car la gestion de l'ajout des critères est complexe. Voir si call de la fonction d'ajout à faire ici, ou si on appelle la création des critères en front une fois l'offre créée
+    /*if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       let criterias: Criteria[] = [];
 
       criteriaIds.forEach(async (id) => {
@@ -142,7 +153,7 @@ export class OfferResolver {
       });
 
       offer.criterias = criterias;
-    }
+    }*/
     if (typeof status === "string") {
       if (Object.values(OfferStatuses).includes(status)) {
         offer.status = status;
@@ -160,52 +171,104 @@ export class OfferResolver {
 
   @Mutation(() => Offer, { nullable: true })
   async addOfferCriterias(
-    @Arg("id") id: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[]
+    @Arg("offerId") id: number,
+    @Arg("criterias", () => [CriteriaInput], { nullable: true })
+    criterias: CriteriaInput[] // TODO : Voir comment faire mieux
   ): Promise<Offer | null> {
-    const offer = await Offer.findOne(id);
+    let offer = await Offer.findOne(id, {
+      relations: ["offerCriterias", "offerType"],
+    });
     if (!offer) {
       return null;
     }
 
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          offer.criterias.push(criteria);
+    if (typeof criterias !== "undefined" && criterias.length > 0) {
+      criterias.forEach(async (offerCriteria) => {
+        let criteria = await Criteria.findOne(offerCriteria.id, {
+          relations: ["offerTypes"],
+        });
+        if (
+          criteria &&
+          criteria.offerTypes.find(
+            (offerType) => offerType.id === offer!.offerType.id
+          )
+        ) {
+          // TODO : afficher des erreurs distinctes lorsque le critère n'existe pas, lorsqu'il ne correspond pas au type d'offre
+          if (
+            (criteria.criteriaType === "int" &&
+              !isNaN(parseInt(offerCriteria.value))) ||
+            (criteria.criteriaType === "boolean" &&
+              Object.values(BooleanValues).includes(offerCriteria.value)) ||
+            criteria.criteriaType === "string"
+          ) {
+            try {
+              await OfferCriteria.create({
+                offer: offer,
+                criteria: criteria,
+                value: offerCriteria.value,
+              }).save();
+            } catch (err) {
+              if (
+                err.code === "23505" ||
+                err.detail.includes("already exists")
+              ) {
+                /*return {
+                  errors: [
+                    { field: "name", message: "This criteria is already set" },
+                  ],
+                };*/
+              } else {
+                console.log(err.code + " " + err.detail);
+              }
+            }
+          }
         }
+        //return; // TODO: Retourner une valeur explicite
       });
+
+      await new Promise((r) => setTimeout(r, 20)); // Pas le choix pour afficher les éléments mis à jour
+
+      let updatedOffer = await Offer.findOne(id, {
+        relations: ["offerCriterias"],
+      });
+
+      return updatedOffer!;
     }
 
-    Offer.update({ id }, { ...offer });
-    return offer;
+    return null;
   }
 
   @Mutation(() => Offer, { nullable: true })
   async removeOfferCriterias(
-    @Arg("id") id: number,
+    @Arg("offerId") id: number,
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]
   ): Promise<Offer | null> {
-    const offer = await Offer.findOne(id);
+    let offer = await Offer.findOne(id, { relations: ["offerCriterias"] });
     if (!offer) {
       return null;
     }
 
     if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteriaIndex = offer.criterias.findIndex(
-          (criteria) => criteria.id == id
+      criteriaIds.forEach(async (criteriaId) => {
+        let foundOfferCriteria = offer!.offerCriterias.find(
+          (offerCriteria) => offerCriteria.criteria.id == criteriaId
         );
-        if (criteriaIndex > -1) {
-          offer.criterias.splice(criteriaIndex, 1);
+
+        if (typeof foundOfferCriteria !== "undefined") {
+          await OfferCriteria.remove(foundOfferCriteria);
         }
       });
+
+      await new Promise((r) => setTimeout(r, 20)); // Pas le choix pour afficher les éléments mis à jour
+
+      let updatedOffer = await Offer.findOne(id, {
+        relations: ["offerCriterias"],
+      });
+      return updatedOffer!;
     }
 
-    Offer.update({ id }, { ...offer });
-    return offer;
+    return null;
   }
 
   @Mutation(() => Boolean)

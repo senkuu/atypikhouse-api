@@ -24,12 +24,12 @@ class OfferTypeResponse {
 export class OfferTypeResolver {
   @Query(() => [OfferType])
   offerTypes(): Promise<OfferType[]> {
-    return OfferType.find();
+    return OfferType.find({ relations: ["criterias"] }); // Fonctionnel (vérifié en console.log)
   }
 
   @Query(() => OfferType, { nullable: true })
   offerType(@Arg("id") id: number): Promise<OfferType | undefined> {
-    return OfferType.findOne(id);
+    return OfferType.findOne(id, { relations: ["criterias"] }); // Fonctionnel (vérifié en console.log)
   }
 
   @Mutation(() => OfferTypeResponse)
@@ -38,7 +38,7 @@ export class OfferTypeResolver {
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]
   ): Promise<OfferTypeResponse> {
-    const errors: FieldError[] = validateOfferType(name, criteriaIds);
+    const errors: FieldError[] = validateOfferType(name /*, criteriaIds*/);
 
     if (errors.length > 0) {
       return {
@@ -52,6 +52,7 @@ export class OfferTypeResolver {
       criteriaIds.forEach(async (id) => {
         let criteria = await Criteria.findOne(id);
         if (criteria) {
+          console.log("-- Critère " + criteria.name + " trouvé");
           criterias.push(criteria);
         }
       });
@@ -62,15 +63,20 @@ export class OfferTypeResolver {
       offerType = await OfferType.create({
         name: name,
         criterias: criterias,
-      }).save();
+      }).save({});
     } catch (err) {
       if (err.code === "23505" || err.detail.includes("already exists")) {
         return {
           errors: [{ field: "name", message: "Offer type already exists" }],
         };
+      } else {
+        console.log(err.code + " " + err.detail);
       }
     }
 
+    criterias.forEach(function (item, index) {
+      console.log(item, index);
+    });
     return { offerType };
   }
 
@@ -111,22 +117,27 @@ export class OfferTypeResolver {
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]
   ): Promise<OfferType | null> {
-    const offerType = await OfferType.findOne(id);
+    let offerType = await OfferType.findOne(id, { relations: ["criterias"] });
+
     if (!offerType) {
       return null;
     }
 
     if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          offerType.criterias.push(criteria);
+      criteriaIds.forEach(async (criteriaId) => {
+        let criteria = await Criteria.findOne(criteriaId);
+
+        if (
+          criteria &&
+          !offerType!.criterias.find((criteria) => criteria.id === criteriaId)
+        ) {
+          offerType!.criterias.push(criteria);
         }
       });
     }
 
-    OfferType.update({ id }, { ...offerType });
-    return offerType;
+    await OfferType.save(offerType!);
+    return offerType!;
   }
 
   @Mutation(() => OfferType, { nullable: true })
@@ -135,24 +146,24 @@ export class OfferTypeResolver {
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]
   ): Promise<OfferType | null> {
-    const offerType = await OfferType.findOne(id);
-    if (!offerType) {
+    let offerType = await OfferType.findOne(id, { relations: ["criterias"] });
+    if (!offerType && typeof offerType) {
       return null;
     }
 
     if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
       criteriaIds.forEach(async (id) => {
-        let criteriaIndex = offerType.criterias.findIndex(
+        let criteriaIndex = offerType!.criterias.findIndex(
           (criteria) => criteria.id == id
         );
         if (criteriaIndex > -1) {
-          offerType.criterias.splice(criteriaIndex, 1);
+          offerType!.criterias.splice(criteriaIndex, 1);
         }
       });
     }
 
-    OfferType.update({ id }, { ...offerType });
-    return offerType;
+    OfferType.save(offerType!);
+    return offerType!;
   }
 
   @Mutation(() => Boolean)

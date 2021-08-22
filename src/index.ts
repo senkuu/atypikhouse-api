@@ -27,6 +27,7 @@ import { MyContext } from "./types";
 import { BookingResolver } from "./resolvers/booking";
 import { CriteriaResolver } from "./resolvers/criteria";
 import { OfferTypeResolver } from "./resolvers/offerType";
+import { OfferCriteria } from "./entities/OfferCriteria";
 import { City } from "./entities/City";
 import { Departement } from "./entities/Departement";
 import { Region } from "./entities/Region";
@@ -46,6 +47,7 @@ const main = async () => {
       Booking,
       Criteria,
       OfferType,
+      OfferCriteria,
       City,
       Departement,
       Region,
@@ -88,7 +90,6 @@ const main = async () => {
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [HelloResolvers, OfferResolver, UserResolver, BookingResolver, CriteriaResolver, OfferTypeResolver],
       resolvers: [
         HelloResolvers,
         OfferResolver,

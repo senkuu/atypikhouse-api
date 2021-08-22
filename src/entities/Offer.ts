@@ -12,7 +12,7 @@ import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
 import { User } from "./User";
 import { Booking } from "./Booking";
-import { Criteria } from "./Criteria";
+import { OfferCriteria } from "./OfferCriteria";
 import { City } from "./City";
 
 export enum OfferStatuses {
@@ -72,11 +72,12 @@ export class Offer extends BaseEntity {
   @OneToMany(() => Booking, (booking) => booking.offer)
   bookings: Booking[];
 
-  //@ManyToMany(type => Criteria, { cascade: true })
-  //@Field()
-  @ManyToMany(() => Criteria, { cascade: true })
-  @JoinTable()
-  criterias: Criteria[];
+  @Field(() => [OfferCriteria])
+  @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.offer, {
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
+  })
+  offerCriterias: OfferCriteria[];
 
   @Field()
   @Column({
