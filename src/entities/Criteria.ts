@@ -6,6 +6,8 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
@@ -47,4 +49,12 @@ export class Criteria extends BaseEntity {
   @Field(() => [OfferCriteria])
   @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.criteria)
   offerCriterias: OfferCriteria[];
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

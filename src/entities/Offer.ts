@@ -14,6 +14,8 @@ import { User } from "./User";
 import { Booking } from "./Booking";
 import { OfferCriteria } from "./OfferCriteria";
 import { City } from "./City";
+import { Photo } from "./Photo";
+import { Planning } from "./Planning";
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -57,6 +59,10 @@ export class Offer extends BaseEntity {
   longitude!: number;
 
   @Field()
+  @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
+  touristTax!: number; // = Taxe de séjour
+
+  @Field()
   @ManyToOne(() => City, (city) => city.offers)
   city!: City;
 
@@ -72,12 +78,20 @@ export class Offer extends BaseEntity {
   @OneToMany(() => Booking, (booking) => booking.offer)
   bookings: Booking[];
 
+  @Field(() => [Photo])
+  @OneToMany(() => Photo, (photo) => photo.offer)
+  photos: Photo[];
+
   @Field(() => [OfferCriteria])
   @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.offer, {
     onUpdate: "CASCADE",
     onDelete: "CASCADE",
   })
   offerCriterias: OfferCriteria[];
+
+  @Field(() => [Planning])
+  @OneToMany(() => Planning, (planning) => planning.offer)
+  planningData: Planning[];
 
   @Field()
   @Column({

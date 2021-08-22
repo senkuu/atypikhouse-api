@@ -34,6 +34,12 @@ import { Region } from "./entities/Region";
 import { CityResolver } from "./resolvers/city";
 import { RegionResolver } from "./resolvers/region";
 import { DepartementResolver } from "./resolvers/departement";
+import { Review } from "./entities/Review";
+import { Photo } from "./entities/Photo";
+import { PhotoType } from "./entities/PhotoType";
+import { Planning } from "./entities/Planning";
+import { NoticeType } from "./entities/NoticeType";
+import { Notice } from "./entities/Notice";
 
 const main = async () => {
   await createConnection({
@@ -54,6 +60,12 @@ const main = async () => {
       City,
       Departement,
       Region,
+      Review,
+      Photo,
+      PhotoType,
+      Planning,
+      Notice,
+      NoticeType,
     ],
   });
 
