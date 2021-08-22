@@ -12,7 +12,6 @@ import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { City } from "./City";
-import { Review } from "./Review";
 import { Notice } from "./Notice";
 
 export enum UserTypes {
@@ -57,10 +56,6 @@ export class User extends BaseEntity {
   @Field(() => City)
   @ManyToOne(() => City, (city) => city.users)
   city!: City;
-
-  @Field(() => [Review])
-  @OneToMany(() => Review, (review) => review.user)
-  reviews: Review[];
 
   @Field(() => [Notice])
   @OneToMany(() => Notice, (notice) => notice.user)

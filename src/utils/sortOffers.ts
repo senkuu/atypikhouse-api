@@ -1,6 +1,7 @@
 import { Position } from "geojson";
 import { Offer } from "../entities/Offer";
 import { calculateDistanceBetweenPoints } from "./calculateDistanceBetweenPoints";
+import { getAverageRating } from "./getReviewsCountAndRating";
 
 export function calculateOfferDistances(
   originPoint: Position,
@@ -93,6 +94,46 @@ export function calculateOfferScores(
       }
     });
   }
+
+  // Score sur 2 pour la moyenne des notes
+  scoredOffers.forEach((offer) => {
+    offer = getAverageRating(offer);
+
+    if (typeof offer.averageRating !== "undefined") {
+      offer.sortScore += Math.ceil((offer.averageRating / 5) * 10) / 5;
+    }
+  });
+
+  // Score sur 2 pour le nombre d'avis laissés
+  let reviewsCount = 0;
+  let reviewsScoreLevels = { 10: 0.25, 25: 0.6, 50: 1, 100: 1.4, 500: 1.75 };
+  scoredOffers.forEach((offer) => {
+    offer.bookings.forEach((booking) => {
+      if (typeof booking.review !== "undefined") {
+        reviewsCount++;
+      }
+    });
+
+    if (reviewsCount >= 5) {
+      for (const [maxReviews, score] of Object.entries(reviewsScoreLevels)) {
+        if (reviewsCount < parseInt(maxReviews)) {
+          offer.sortScore += score;
+          break;
+        }
+      }
+
+      if (
+        reviewsCount >=
+        parseInt(
+          Object.keys(reviewsScoreLevels)[
+            Object.keys(reviewsScoreLevels).length
+          ]
+        )
+      ) {
+        offer.sortScore += 2;
+      }
+    }
+  });
 
   return scoredOffers;
 }

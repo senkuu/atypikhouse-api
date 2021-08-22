@@ -6,10 +6,12 @@ import {
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from "typeorm";
 import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { Offer } from "./Offer";
 import { User } from "./User";
+import { Review } from "./Review";
 
 export enum BookingStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -48,6 +50,10 @@ export class Booking extends BaseEntity {
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.bookings)
   occupant!: User;
+
+  @Field(() => Review, { nullable: true })
+  @OneToOne(() => Review, (review) => review.booking)
+  review: Review;
 
   @Field()
   @Column({ type: "timestamp" })

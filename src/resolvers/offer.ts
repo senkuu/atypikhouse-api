@@ -26,7 +26,13 @@ export class OfferResolver {
     @Arg("getCities", { nullable: true }) getCities: boolean,
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean
   ): Promise<Offer[]> {
-    let relations = ["owner", "bookings", "offerType", "offerCriterias"];
+    let relations = [
+      "owner",
+      "bookings",
+      "offerType",
+      "offerCriterias",
+      "bookings.review",
+    ];
 
     if (
       (typeof getCities !== "undefined" && getCities) ||

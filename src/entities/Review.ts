@@ -3,14 +3,12 @@ import {
   Column,
   Entity,
   PrimaryGeneratedColumn,
-  ManyToOne,
   OneToOne,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
-import { User } from "./User";
 import { Booking } from "./Booking";
 
 //TODO: Resolver à faire (si besoin)
@@ -21,21 +19,27 @@ export class Review extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Field(() => User)
-  @ManyToOne(() => User, (user) => user.reviews)
-  user!: User;
-
   @Field()
   @Column()
   text!: string;
 
   @Field(() => Booking)
-  @OneToOne(() => Booking)
+  @OneToOne(() => Booking, (booking) => booking.review)
   @JoinColumn()
   booking!: Booking;
 
   @Field()
-  @Column()
+  @Column({
+    type: "decimal",
+    transformer: {
+      to(value) {
+        return value;
+      },
+      from(value) {
+        return parseFloat(value);
+      },
+    },
+  })
   rating!: number;
 
   @Field(() => String)
