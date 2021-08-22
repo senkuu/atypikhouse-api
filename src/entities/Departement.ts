@@ -26,7 +26,7 @@ export class Departement extends BaseEntity {
   number!: string;
 
   @Field(() => Region)
-  @ManyToOne(() => Region, (region) => region.departements)
+  @ManyToOne(() => Region, (region) => region.departements, { eager: true })
   region!: Region;
 
   @Field(() => [City])

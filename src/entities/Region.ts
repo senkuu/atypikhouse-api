@@ -21,5 +21,5 @@ export class Region extends BaseEntity {
 
   @Field(() => [Departement])
   @OneToMany(() => Departement, (departement) => departement.region)
-  departements: Departement[];
+  departements!: Departement[];
 }

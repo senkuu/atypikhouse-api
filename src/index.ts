@@ -31,6 +31,9 @@ import { OfferCriteria } from "./entities/OfferCriteria";
 import { City } from "./entities/City";
 import { Departement } from "./entities/Departement";
 import { Region } from "./entities/Region";
+import { CityResolver } from "./resolvers/city";
+import { RegionResolver } from "./resolvers/region";
+import { DepartementResolver } from "./resolvers/departement";
 
 const main = async () => {
   await createConnection({
@@ -97,6 +100,9 @@ const main = async () => {
         BookingResolver,
         CriteriaResolver,
         OfferTypeResolver,
+        CityResolver,
+        RegionResolver,
+        DepartementResolver,
       ],
       validate: false,
     }),
