@@ -1,14 +1,14 @@
 version: "3"
 services:
-  api:
-    build: .
-    env_file:
-      - .env.development
-    ports:
-      - 4000:4000
-    depends_on:
-      - redis
-      - database
+#  api:
+#    build: .
+#    env_file:
+#      - .env.development
+#    ports:
+#      - 4000:4000
+#    depends_on:
+#      - redis
+#      - database
   database:
     image: postgis/postgis:latest
     restart: always
