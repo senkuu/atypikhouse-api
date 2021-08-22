@@ -44,11 +44,11 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
-  //@Field()
+  @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.owner)
   offers: Offer[];
 
-  //@Field()
+  @Field(() => [Booking])
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
 
