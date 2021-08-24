@@ -49,7 +49,7 @@ export function calculateOfferScores(
       });
     }
 
-    let distanceScoreLevels = [5, 10, 30, 50, 100, 250];
+    let distanceScoreLevels = [5, 10, 20, 30, 50];
     scoredOffers.forEach((offer) => {
       let distanceScore = 4;
 
@@ -134,6 +134,25 @@ export function calculateOfferScores(
       }
     }
   });
+
+  if (useDistances) {
+    let nearOffers: Offer[] = [];
+    let otherOffers: Offer[] = [];
+
+    scoredOffers.forEach((offer) => {
+      if (offer.distance < 50) {
+        nearOffers.push(offer);
+      } else {
+        otherOffers.push(offer);
+      }
+    });
+
+    nearOffers = nearOffers.sort(function (offer1, offer2) {
+      return offer2.sortScore - offer1.sortScore;
+    });
+
+    return [...nearOffers, ...otherOffers];
+  }
 
   return scoredOffers;
 }
