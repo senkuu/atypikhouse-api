@@ -7,14 +7,18 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  ManyToMany,
-  JoinTable,
+  Index,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
 import { User } from "./User";
 import { Booking } from "./Booking";
-import { Criteria } from "./Criteria";
+import { OfferCriteria } from "./OfferCriteria";
+import { City } from "./City";
+import { Photo } from "./Photo";
+import { Planning } from "./Planning";
+//import { CoordinatesInput } from "../resolvers/CoordinatesInput";
+import { Point } from "geojson";
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -47,15 +51,44 @@ export class Offer extends BaseEntity {
 
   @Field()
   @Column({ type: "text" })
-  description!: string;
+  description: string;
 
   @Field()
-  @Column({ type: "decimal" }) // Vérifier si type ok
-  latitude!: number;
+  @Column({ nullable: true })
+  address: string;
+
+  // // TODO: Implémenter les coordonnées en tant que champ
+  //@Field(() => GeoJSONPoint)
+  @Index({ spatial: true })
+  @Column({
+    type: "geography",
+    spatialFeatureType: "Point",
+    srid: 4326,
+  })
+  coordinates: Point;
+
+  @Field({ nullable: true })
+  latitude: number;
+
+  @Field({ nullable: true })
+  longitude: number;
 
   @Field()
-  @Column({ type: "decimal" }) // Vérifier si type ok
-  longitude!: number;
+  @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
+  touristTax!: number; // = Taxe de séjour
+
+  @Field({ nullable: true })
+  distance: number;
+
+  @Field({ nullable: true })
+  sortScore: number;
+
+  @Field({ nullable: true })
+  averageRating: number;
+
+  @Field()
+  @ManyToOne(() => City, (city) => city.offers)
+  city!: City;
 
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.offers)
@@ -69,11 +102,20 @@ export class Offer extends BaseEntity {
   @OneToMany(() => Booking, (booking) => booking.offer)
   bookings: Booking[];
 
-  //@ManyToMany(type => Criteria, { cascade: true })
-  //@Field()
-  @ManyToMany(() => Criteria, { cascade: true })
-  @JoinTable()
-  criterias: Criteria[];
+  @Field(() => [Photo])
+  @OneToMany(() => Photo, (photo) => photo.offer)
+  photos: Photo[];
+
+  @Field(() => [OfferCriteria])
+  @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.offer, {
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
+  })
+  offerCriterias: OfferCriteria[];
+
+  @Field(() => [Planning])
+  @OneToMany(() => Planning, (planning) => planning.offer)
+  planningData: Planning[];
 
   @Field()
   @Column({

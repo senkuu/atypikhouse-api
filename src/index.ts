@@ -25,9 +25,22 @@ import { UserResolver } from "./resolvers/user";
 
 import { COOKIE_NAME, __prod__ } from "./constants";
 import { MyContext } from "./types";
-import {BookingResolver} from "./resolvers/booking";
-import {CriteriaResolver} from "./resolvers/criteria";
-import {OfferTypeResolver} from "./resolvers/offerType";
+import { BookingResolver } from "./resolvers/booking";
+import { CriteriaResolver } from "./resolvers/criteria";
+import { OfferTypeResolver } from "./resolvers/offerType";
+import { OfferCriteria } from "./entities/OfferCriteria";
+import { City } from "./entities/City";
+import { Departement } from "./entities/Departement";
+import { Region } from "./entities/Region";
+import { CityResolver } from "./resolvers/city";
+import { RegionResolver } from "./resolvers/region";
+import { DepartementResolver } from "./resolvers/departement";
+import { Review } from "./entities/Review";
+import { Photo } from "./entities/Photo";
+import { PhotoType } from "./entities/PhotoType";
+import { Planning } from "./entities/Planning";
+import { NoticeType } from "./entities/NoticeType";
+import { Notice } from "./entities/Notice";
 
 const main = async () => {
   const connection = await createConnection({
@@ -39,60 +52,86 @@ const main = async () => {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
-    entities: [Offer, User, Booking, Criteria, OfferType],
+    entities: [
+        Offer,
+        User,
+        Booking,
+        Criteria,
+        OfferType,
+        OfferCriteria,
+        City,
+        Departement,
+        Region,
+        Review,
+        Photo,
+        PhotoType,
+        Planning,
+        Notice,
+        NoticeType,
+    ],
   });
   await connection.runMigrations();
 
-  const app = express();
+    const app = express();
 
-  const RedisStore = connectRedis(session);
-  const redis = new Redis(
-    parseInt(process.env.REDIS_PORT!),
-    process.env.REDIS_HOST
-  );
+    const RedisStore = connectRedis(session);
+    const redis = new Redis(
+        parseInt(process.env.REDIS_PORT!),
+        process.env.REDIS_HOST
+    );
 
-  app.use(
-    cors({
-      origin: process.env.WEB_URL ?? "http://localhost:3000",
-      credentials: true,
-    })
-  );
+    app.use(
+        cors({
+            origin: process.env.WEB_URL ?? "http://localhost:3000",
+            credentials: true,
+        })
+    );
 
-  app.use(
-    session({
-      name: COOKIE_NAME,
-      store: new RedisStore({
-        client: redis,
-        disableTouch: true,
-      }),
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 ans (pour test)
-        httpOnly: true,
-        sameSite: "lax", // csrf
-        secure: __prod__, // only works in https
-      },
-      saveUninitialized: false,
-      secret: "ekip",
-      resave: false,
-    })
-  );
+    app.use(
+        session({
+            name: COOKIE_NAME,
+            store: new RedisStore({
+                client: redis,
+                disableTouch: true,
+            }),
+            cookie: {
+                maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 ans (pour test)
+                httpOnly: true,
+                sameSite: "lax", // csrf
+                secure: __prod__, // only works in https
+            },
+            saveUninitialized: false,
+            secret: "ekip",
+            resave: false,
+        })
+    );
 
-  const apolloServer = new ApolloServer({
-    schema: await buildSchema({
-      resolvers: [HelloResolvers, OfferResolver, UserResolver, BookingResolver, CriteriaResolver, OfferTypeResolver],
-      validate: false,
-    }),
-    context: ({ req, res }): MyContext => ({ req, res, redis }),
-  });
+    const apolloServer = new ApolloServer({
+        schema: await buildSchema({
+            resolvers: [
+                HelloResolvers,
+                OfferResolver,
+                UserResolver,
+                BookingResolver,
+                CriteriaResolver,
+                OfferTypeResolver,
+                CityResolver,
+                RegionResolver,
+                DepartementResolver,
+            ],
+            validate: false,
+        }),
+        context: ({ req, res }): MyContext => ({ req, res, redis }),
+    });
 
-  apolloServer.applyMiddleware({
-    app,
-    cors: false,
-  });
+    apolloServer.applyMiddleware({
+        app,
+        cors: false,
+    });
 
-  app.listen(4000, () => {
-    console.log(`server started on localhost:4000`);
-  });
+    app.listen(4000, () => {
+        console.log(`server started on localhost:4000`);
+    });
 };
 
 main();

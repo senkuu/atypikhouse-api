@@ -3,13 +3,19 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
+import { City } from "./City";
+import { Notice } from "./Notice";
+import { Photo } from "./Photo";
 
 export enum UserTypes {
   DEFAULT = "default",
@@ -42,13 +48,31 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
-  //@Field()
+  @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.owner)
   offers: Offer[];
 
-  //@Field()
+  @Field(() => [Booking])
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
+
+  @Field(() => City)
+  @ManyToOne(() => City, (city) => city.users)
+  city!: City;
+
+  @Field(() => [Notice])
+  @OneToMany(() => Notice, (notice) => notice.user)
+  notices: Notice[];
+
+  @Field(() => [Notice])
+  @OneToMany(() => Notice, (notice) => notice.linkedUser)
+  linkedNotices: Notice[];
+
+  // Photo de profil
+  @Field(() => Photo)
+  @OneToOne(() => Photo, (photo) => photo.user)
+  @JoinColumn()
+  photo!: Photo;
 
   @Field()
   @Column({

@@ -41,6 +41,11 @@ export class BookingResolver {
       return null;
     }
 
+    // TODO: Erreur explicite à indiquer
+    if (endDate < startDate) {
+      return null;
+    }
+
     if (typeof status === "string") {
       if (!Object.values(BookingStatuses).includes(status)) {
         status = BookingStatuses.WAITING_APPROVAL;

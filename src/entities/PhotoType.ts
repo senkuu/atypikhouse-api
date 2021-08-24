@@ -3,33 +3,26 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  ManyToMany,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
-import { Offer } from "./Offer";
-import { Criteria } from "./Criteria";
 
+//TODO: Resolver à faire
 @ObjectType()
 @Entity()
-export class OfferType extends BaseEntity {
+export class PhotoType extends BaseEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;
 
   @Field()
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
-  @Field(() => [Offer])
-  @OneToMany(() => Offer, (offer) => offer.offerType)
-  offers: Offer[];
-
-  @Field(() => [Criteria])
-  @ManyToMany(() => Criteria, (criteria) => criteria.offerTypes)
-  criterias: Criteria[];
+  @Field()
+  @Column({ nullable: true })
+  description: string;
 
   @Field(() => String)
   @CreateDateColumn()

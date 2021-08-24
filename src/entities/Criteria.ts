@@ -5,9 +5,13 @@ import {
   PrimaryGeneratedColumn,
   ManyToMany,
   JoinTable,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { OfferType } from "./OfferType";
+import { OfferCriteria } from "./OfferCriteria";
 
 export enum CriteriaTypes {
   STRING = "string",
@@ -38,11 +42,19 @@ export class Criteria extends BaseEntity {
   })
   criteriaType!: CriteriaTypes;
 
-  //@ManyToMany(type => OfferType, { cascade: true })
-  //@Field()
-  @ManyToMany(() => OfferType, (offerType) => offerType.criterias, {
-    cascade: true,
-  })
+  @ManyToMany(() => OfferType, (offerType) => offerType.criterias)
   @JoinTable()
   offerTypes: OfferType[];
+
+  @Field(() => [OfferCriteria])
+  @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.criteria)
+  offerCriterias: OfferCriteria[];
+
+  @Field(() => String)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field(() => String)
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

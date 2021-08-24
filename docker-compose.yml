@@ -12,10 +12,14 @@ services:
     networks:
       - app-network
   database:
-    image: postgres
+    image: postgis/postgis:latest
     restart: always
     env_file:
       - .env
+    environment:
+      POSTGRES_DATABASE: atypikhouse
+      POSTGRES_USER: atypikhouse
+      POSTGRES_PASSWORD: atypikhouse
     ports:
       - 5432:5432
     volumes:
@@ -40,6 +44,7 @@ services:
       - app-network
   redis:
     image: "redis:alpine"
+    restart: always
     ports:
       - 6379:6379
     volumes:
