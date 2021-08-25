@@ -1,7 +1,6 @@
 import { isValidEmail } from "./isValidEmail";
 import { RegisterInput } from "../resolvers/RegisterInput";
 import { FieldError } from "../resolvers/FieldError";
-import { UserTypes } from "../entities/User";
 
 export const validateRegister = (options: RegisterInput): FieldError[] => {
   const errors: FieldError[] = [];
@@ -48,14 +47,14 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
     });
   }
 
-  if (typeof options.userType !== "undefined") {
-    if (!Object.values(UserTypes).includes(options.userType)) {
-      errors.push({
-        field: "userType",
-        message: "User type is not valid",
-      });
-    }
-  }
+  //TODO: En attente d'intégration
+  /*if (!/[0-9]/.test(options.password) || !/[A-Z]/.test(options.password)) {
+    errors.push({
+      field: "password",
+      message:
+        "Le mot de passe doit co mporter au moins 1 chiffre et 1 majuscule",
+    });
+  }*/
 
   return errors;
 };
