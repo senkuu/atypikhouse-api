@@ -1,6 +1,6 @@
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
 
-import { DeleteReasons, Offer, OfferStatuses } from "../entities/Offer";
+import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
@@ -12,9 +12,10 @@ import { Point, Position } from "geojson";
 import { City } from "../entities/City";
 import {
   calculateOfferDistances,
-  calculateOfferScores,
+  calculateOfferScore,
   sortOffersByDistance,
 } from "../utils/sortOffers";
+import { DeleteReasons } from "../entities/DeleteReasons";
 
 @Resolver()
 export class OfferResolver {
@@ -36,7 +37,8 @@ export class OfferResolver {
 
     if (
       (typeof getCities !== "undefined" && getCities) ||
-      (typeof getDepartements !== "undefined" && getDepartements)
+      (typeof getDepartements !== "undefined" && getDepartements) ||
+      typeof cityId !== "undefined"
     ) {
       relations.push("city");
 
@@ -47,10 +49,8 @@ export class OfferResolver {
 
     let offers = await Offer.find({ relations });
 
-    //TODO: Trouver une manière plus propre ?
     offers.forEach((offer) => {
-      offer.latitude = offer.coordinates.coordinates[0];
-      offer.longitude = offer.coordinates.coordinates[1];
+      [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
     });
 
     console.log(offers);
@@ -77,13 +77,14 @@ export class OfferResolver {
     }
 
     if (calculateDistances) {
-      console.log("CALC DISTANCES");
       offers = calculateOfferDistances(originPoint, offers);
       offers = sortOffersByDistance(offers);
 
       offers = cityFound
-        ? calculateOfferScores(offers, true, cityId)
-        : calculateOfferScores(offers, true);
+        ? calculateOfferScore(offers, true, cityId)
+        : calculateOfferScore(offers, true);
+    } else {
+      calculateOfferScore(offers, false);
     }
 
     return offers;
@@ -115,7 +116,7 @@ export class OfferResolver {
     @Arg("offerTypeId") offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
     //criteriaIds: number[],
-    @Arg("deleteReasons") deleteReason: DeleteReasons,
+    @Arg("deleteReason") deleteReason: DeleteReasons,
     @Arg("status") status: OfferStatuses
   ): Promise<Offer | null> {
     const owner = await User.findOne(ownerId);
@@ -208,19 +209,11 @@ export class OfferResolver {
       });
     }*/
 
-    if (typeof deleteReason === "string") {
-      if (!Object.values(DeleteReasons).includes(deleteReason)) {
-        deleteReason = DeleteReasons.UNKNOWN;
-      }
-    } else {
+    if (typeof deleteReason === "undefined") {
       deleteReason = DeleteReasons.UNKNOWN;
     }
 
-    if (typeof status === "string") {
-      if (!Object.values(OfferStatuses).includes(status)) {
-        status = OfferStatuses.WAITING_APPROVAL;
-      }
-    } else {
+    if (typeof status === "undefined") {
       status = OfferStatuses.WAITING_APPROVAL;
     }
 
@@ -300,15 +293,11 @@ export class OfferResolver {
 
       offer.criterias = criterias;
     }*/
-    if (typeof status === "string") {
-      if (Object.values(OfferStatuses).includes(status)) {
-        offer.status = status;
-      }
+    if (typeof status !== "undefined") {
+      offer.status = status;
     }
-    if (typeof deleteReason === "string") {
-      if (Object.values(DeleteReasons).includes(deleteReason)) {
-        offer.deleteReason = deleteReason;
-      }
+    if (typeof deleteReason !== "undefined") {
+      offer.deleteReason = deleteReason;
     }
 
     Offer.update({ id }, { ...offer });

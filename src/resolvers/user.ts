@@ -13,7 +13,7 @@ import argon2 from "argon2";
 import { v4 } from "uuid";
 
 import { MyContext } from "../types";
-import { User, UserTypes } from "../entities/User";
+import { User, UserStatuses, UserTypes } from "../entities/User";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 
 // import utils
@@ -79,6 +79,7 @@ export class UserResolver {
         email: options.email,
         password: hashedPassword,
         userType: options.userType ?? UserTypes.DEFAULT,
+        status: options.status ?? UserStatuses.ACTIVATION_PENDING,
       }).save();
     } catch (err) {
       if (err.code === "23505" || err.detail.includes("already exists")) {
@@ -106,7 +107,7 @@ export class UserResolver {
         errors: [
           {
             field: "email",
-            message: "Invalid Email or Password",
+            message: "Adresse mail ou mot de passe invalide",
           },
         ],
       };
@@ -119,7 +120,7 @@ export class UserResolver {
         errors: [
           {
             field: "email",
-            message: "Invalid Email or Password",
+            message: "Adresse mail ou mot de passe invalide",
           },
         ],
       };

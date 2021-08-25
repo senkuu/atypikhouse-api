@@ -10,7 +10,6 @@ import {
 import { Field, ObjectType } from "type-graphql";
 import { Departement } from "./Departement";
 import { Offer } from "./Offer";
-import { User } from "./User";
 import { Point } from "geojson";
 
 @ObjectType()
@@ -33,10 +32,6 @@ export class City extends BaseEntity {
   offers: Offer[];
 
   @Field()
-  @Column({ nullable: true })
-  intercommunalite: number;
-
-  @Field()
   @Column()
   population!: number;
 
@@ -50,8 +45,4 @@ export class City extends BaseEntity {
     nullable: true,
   })
   coordinates: Point;
-
-  @Field(() => [User])
-  @OneToMany(() => User, (user) => user.city)
-  users: User[];
 }

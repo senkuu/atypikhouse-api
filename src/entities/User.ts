@@ -4,16 +4,14 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Field, ObjectType } from "type-graphql";
+import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
-import { City } from "./City";
 import { Notice } from "./Notice";
 import { Photo } from "./Photo";
 
@@ -25,6 +23,21 @@ export enum UserTypes {
   ADMIN = "admin",
   TECHNICAL = "technical",
 }
+
+export enum UserStatuses {
+  ACTIVATION_PENDING = "activationPending",
+  ACTIVATED = "activated",
+  DISABLED = "disabled",
+  CLOSED = "closed",
+}
+
+registerEnumType(UserTypes, {
+  name: "UserTypes",
+});
+
+registerEnumType(UserStatuses, {
+  name: "UserStatus",
+});
 
 @ObjectType()
 @Entity()
@@ -48,6 +61,10 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
+  @Field()
+  @Column({ nullable: true })
+  description: string;
+
   @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.owner)
   offers: Offer[];
@@ -55,10 +72,6 @@ export class User extends BaseEntity {
   @Field(() => [Booking])
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
-
-  @Field(() => City)
-  @ManyToOne(() => City, (city) => city.users)
-  city!: City;
 
   @Field(() => [Notice])
   @OneToMany(() => Notice, (notice) => notice.user)
@@ -70,9 +83,9 @@ export class User extends BaseEntity {
 
   // Photo de profil
   @Field(() => Photo)
-  @OneToOne(() => Photo, (photo) => photo.user)
+  @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
-  photo!: Photo;
+  photo: Photo;
 
   @Field()
   @Column({
@@ -81,6 +94,14 @@ export class User extends BaseEntity {
     default: UserTypes.DEFAULT,
   })
   userType!: UserTypes;
+
+  @Field()
+  @Column({
+    type: "enum",
+    enum: UserStatuses,
+    default: UserStatuses.ACTIVATION_PENDING,
+  })
+  status!: UserStatuses;
 
   @Field(() => String)
   @CreateDateColumn()
