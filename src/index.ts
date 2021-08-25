@@ -70,7 +70,7 @@ const main = async () => {
         NoticeType,
     ],
   });
-  await connection.runMigrations();
+  //await connection.runMigrations();
 
     const app = express();
 

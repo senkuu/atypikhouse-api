@@ -16,10 +16,6 @@ services:
     restart: always
     env_file:
       - .env
-    environment:
-      POSTGRES_DATABASE: atypikhouse
-      POSTGRES_USER: atypikhouse
-      POSTGRES_PASSWORD: atypikhouse
     ports:
       - 5432:5432
     volumes:
