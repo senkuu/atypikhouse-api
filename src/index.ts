@@ -51,7 +51,7 @@ const main = async () => {
     password: process.env.DB_PASSWORD,
     logging: true,
     synchronize: true,
-    migrations: [path.join(__dirname, "./migrations/*")],
+    //migrations: [path.join(__dirname, "./migrations/*")],
     entities: [
         Offer,
         User,
@@ -70,7 +70,7 @@ const main = async () => {
         NoticeType,
     ],
   });
-  await connection.runMigrations();
+  //await connection.runMigrations();
 
     const app = express();
 
