@@ -29,7 +29,7 @@ export function sortOffersByDistance(offers: Offer[]) {
   return sortedOffers;
 }
 
-export function calculateOfferScores(
+export function calculateOfferScore(
   offers: Offer[],
   useDistances: boolean,
   cityId?: number
@@ -135,11 +135,15 @@ export function calculateOfferScores(
     }
   });
 
+  return sortByOfferScore(scoredOffers, useDistances);
+}
+
+export function sortByOfferScore(offers: Offer[], useDistances: boolean) {
   if (useDistances) {
     let nearOffers: Offer[] = [];
     let otherOffers: Offer[] = [];
 
-    scoredOffers.forEach((offer) => {
+    offers.forEach((offer) => {
       if (offer.distance < 50) {
         nearOffers.push(offer);
       } else {
@@ -154,32 +158,7 @@ export function calculateOfferScores(
     return [...nearOffers, ...otherOffers];
   }
 
-  return scoredOffers;
-}
-
-/*
-export function sortOffersByDistance(origin: Position, offers: Offer[]) {
-  const sortedOffers = offers.slice();
-
-  sortedOffers.sort(function (offer1, offer2) {
-    let distanceOriginPoint1 = distanceBetweenPoints(
-      origin,
-      offer1.coordinates.coordinates
-    );
-    let distanceOriginPoint2 = distanceBetweenPoints(
-      origin,
-      offer2.coordinates.coordinates
-    );
-
-    let distanceDiff =
-      distanceBetweenPoints(origin, offer1.coordinates.coordinates) -
-      distanceBetweenPoints(origin, offer2.coordinates.coordinates);
-
-    console.log(distanceOriginPoint1 + " / " + distanceOriginPoint2);
-
-    return distanceDiff;
+  return offers.sort(function (offer1, offer2) {
+    return offer2.sortScore - offer1.sortScore;
   });
-
-  return sortedOffers;
 }
-*/

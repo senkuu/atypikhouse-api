@@ -12,7 +12,7 @@ import { Point, Position } from "geojson";
 import { City } from "../entities/City";
 import {
   calculateOfferDistances,
-  calculateOfferScores,
+  calculateOfferScore,
   sortOffersByDistance,
 } from "../utils/sortOffers";
 
@@ -77,13 +77,14 @@ export class OfferResolver {
     }
 
     if (calculateDistances) {
-      console.log("CALC DISTANCES");
       offers = calculateOfferDistances(originPoint, offers);
       offers = sortOffersByDistance(offers);
 
       offers = cityFound
-        ? calculateOfferScores(offers, true, cityId)
-        : calculateOfferScores(offers, true);
+        ? calculateOfferScore(offers, true, cityId)
+        : calculateOfferScore(offers, true);
+    } else {
+      calculateOfferScore(offers, false);
     }
 
     return offers;
