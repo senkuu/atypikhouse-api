@@ -106,7 +106,7 @@ export class UserResolver {
         errors: [
           {
             field: "email",
-            message: "Invalid Email or Password",
+            message: "Adresse mail ou mot de passe invalide",
           },
         ],
       };
@@ -119,7 +119,7 @@ export class UserResolver {
         errors: [
           {
             field: "email",
-            message: "Invalid Email or Password",
+            message: "Adresse mail ou mot de passe invalide",
           },
         ],
       };
