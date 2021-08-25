@@ -4,7 +4,6 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
-  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -13,7 +12,6 @@ import {
 import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
-import { City } from "./City";
 import { Notice } from "./Notice";
 import { Photo } from "./Photo";
 
@@ -55,10 +53,6 @@ export class User extends BaseEntity {
   @Field(() => [Booking])
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
-
-  @Field(() => City)
-  @ManyToOne(() => City, (city) => city.users)
-  city!: City;
 
   @Field(() => [Notice])
   @OneToMany(() => Notice, (notice) => notice.user)
