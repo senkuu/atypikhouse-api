@@ -79,9 +79,9 @@ export class User extends BaseEntity {
 
   // Photo de profil
   @Field(() => Photo)
-  @OneToOne(() => Photo, (photo) => photo.user)
+  @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
-  photo!: Photo;
+  photo: Photo;
 
   @Field()
   @Column({
