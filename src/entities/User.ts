@@ -61,6 +61,10 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
+  @Field()
+  @Column({ nullable: true })
+  description: string;
+
   @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.owner)
   offers: Offer[];

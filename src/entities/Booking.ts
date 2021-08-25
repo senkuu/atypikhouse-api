@@ -55,6 +55,23 @@ export class Booking extends BaseEntity {
   @OneToOne(() => Review, (review) => review.booking, { nullable: true })
   review: Review;
 
+  //TODO : A intégrer
+  /*@Field()
+  @Column({ default: 1 })
+  adults: number;
+
+  @Field()
+  @Column({ default: 0 })
+  children: number;
+
+  @Field()
+  @Column({ type: "decimal", nullable: true })
+  totalPriceHT!: number;
+
+  @Field()
+  @Column({ type: "decimal", nullable: true })
+  totalPriceTTC!: number;*/
+
   @Field()
   @Column({ type: "timestamp" })
   startDate!: Date;
