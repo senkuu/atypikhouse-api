@@ -31,6 +31,10 @@ export enum UserStatuses {
   CLOSED = "closed",
 }
 
+registerEnumType(UserTypes, {
+  name: "UserTypes",
+});
+
 registerEnumType(UserStatuses, {
   name: "UserStatus",
 });

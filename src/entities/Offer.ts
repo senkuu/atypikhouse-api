@@ -9,7 +9,7 @@ import {
   OneToMany,
   Index,
 } from "typeorm";
-import { Field, ObjectType } from "type-graphql";
+import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { OfferType } from "./OfferType";
 import { User } from "./User";
 import { Booking } from "./Booking";
@@ -19,6 +19,7 @@ import { Photo } from "./Photo";
 import { Planning } from "./Planning";
 //import { CoordinatesInput } from "../resolvers/CoordinatesInput";
 import { Point } from "geojson";
+import { DeleteReasons } from "./DeleteReasons";
 
 export enum OfferStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -29,14 +30,9 @@ export enum OfferStatuses {
   DELETED = "DELETED",
 }
 
-export enum DeleteReasons {
-  UNKNOWN = "UNKNOWN",
-  TC_NON_COMPLIANT = "TC_NON_COMPLIANT", // Non conforme aux CGU
-  NOT_DISCLOSABLE = "NOT_DISCLOSABLE",
-  STAFF_UNILATERAL = "STAFF_UNILATERAL",
-  OWNER_UNILATERAL = "OWNER_UNILATERAL",
-  DISPUTE = "DISPUTE",
-}
+registerEnumType(DeleteReasons, {
+  name: "DeleteReasons",
+});
 
 @ObjectType()
 @Entity()

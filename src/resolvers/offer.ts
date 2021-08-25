@@ -1,6 +1,6 @@
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
 
-import { DeleteReasons, Offer, OfferStatuses } from "../entities/Offer";
+import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
@@ -15,6 +15,7 @@ import {
   calculateOfferScore,
   sortOffersByDistance,
 } from "../utils/sortOffers";
+import { DeleteReasons } from "../entities/DeleteReasons";
 
 @Resolver()
 export class OfferResolver {
@@ -116,7 +117,7 @@ export class OfferResolver {
     @Arg("offerTypeId") offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
     //criteriaIds: number[],
-    @Arg("deleteReasons") deleteReason: DeleteReasons,
+    @Arg("deleteReason") deleteReason: DeleteReasons,
     @Arg("status") status: OfferStatuses
   ): Promise<Offer | null> {
     const owner = await User.findOne(ownerId);
@@ -209,19 +210,11 @@ export class OfferResolver {
       });
     }*/
 
-    if (typeof deleteReason === "string") {
-      if (!Object.values(DeleteReasons).includes(deleteReason)) {
-        deleteReason = DeleteReasons.UNKNOWN;
-      }
-    } else {
+    if (typeof deleteReason === "undefined") {
       deleteReason = DeleteReasons.UNKNOWN;
     }
 
-    if (typeof status === "string") {
-      if (!Object.values(OfferStatuses).includes(status)) {
-        status = OfferStatuses.WAITING_APPROVAL;
-      }
-    } else {
+    if (typeof status === "undefined") {
       status = OfferStatuses.WAITING_APPROVAL;
     }
 
@@ -301,15 +294,11 @@ export class OfferResolver {
 
       offer.criterias = criterias;
     }*/
-    if (typeof status === "string") {
-      if (Object.values(OfferStatuses).includes(status)) {
-        offer.status = status;
-      }
+    if (typeof status !== "undefined") {
+      offer.status = status;
     }
-    if (typeof deleteReason === "string") {
-      if (Object.values(DeleteReasons).includes(deleteReason)) {
-        offer.deleteReason = deleteReason;
-      }
+    if (typeof deleteReason !== "undefined") {
+      offer.deleteReason = deleteReason;
     }
 
     Offer.update({ id }, { ...offer });
