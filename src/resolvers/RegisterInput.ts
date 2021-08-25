@@ -1,5 +1,5 @@
 import { Field, InputType } from "type-graphql";
-import { UserTypes } from "../entities/User";
+import { UserStatuses, UserTypes } from "../entities/User";
 
 @InputType()
 export class RegisterInput {
@@ -13,4 +13,6 @@ export class RegisterInput {
   password: string;
   @Field({ nullable: true })
   userType?: UserTypes;
+  @Field({ nullable: true })
+  status?: UserStatuses;
 }

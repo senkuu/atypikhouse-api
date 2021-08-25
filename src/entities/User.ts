@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { Field, ObjectType } from "type-graphql";
+import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { Notice } from "./Notice";
@@ -23,6 +23,17 @@ export enum UserTypes {
   ADMIN = "admin",
   TECHNICAL = "technical",
 }
+
+export enum UserStatuses {
+  ACTIVATION_PENDING = "activationPending",
+  ACTIVATED = "activated",
+  DISABLED = "disabled",
+  CLOSED = "closed",
+}
+
+registerEnumType(UserStatuses, {
+  name: "UserStatus",
+});
 
 @ObjectType()
 @Entity()
@@ -75,6 +86,14 @@ export class User extends BaseEntity {
     default: UserTypes.DEFAULT,
   })
   userType!: UserTypes;
+
+  @Field()
+  @Column({
+    type: "enum",
+    enum: UserStatuses,
+    default: UserStatuses.ACTIVATION_PENDING,
+  })
+  status!: UserStatuses;
 
   @Field(() => String)
   @CreateDateColumn()
