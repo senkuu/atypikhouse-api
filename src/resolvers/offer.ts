@@ -111,6 +111,8 @@ export class OfferResolver {
     @Arg("coordinates", () => CoordinatesInput, { nullable: true })
     coordinates: CoordinatesInput,
     @Arg("address", { nullable: true }) address: string,
+    @Arg("touristTax", { nullable: true }) touristTax: number,
+    @Arg("price") price: number,
     @Arg("cityId") cityId: number,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
@@ -221,6 +223,8 @@ export class OfferResolver {
     return Offer.create({
       title,
       description,
+      touristTax: touristTax ?? 0,
+      basePriceHT: price,
       coordinates: formattedCoordinates,
       city,
       address,
@@ -239,6 +243,9 @@ export class OfferResolver {
     @Arg("description", () => String, { nullable: true }) description: string,
     @Arg("coordinates", () => CoordinatesInput, { nullable: true })
     coordinates: CoordinatesInput,
+    @Arg("address", { nullable: true }) address: string,
+    @Arg("touristTax", { nullable: true }) touristTax: number,
+    @Arg("price", { nullable: true }) price: number,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
@@ -267,6 +274,15 @@ export class OfferResolver {
         type: "Point",
         coordinates: [coordinates.latitude, coordinates.longitude],
       };
+    }
+    if (typeof address !== "undefined") {
+      offer.address = address;
+    }
+    if (typeof touristTax !== "undefined") {
+      offer.touristTax = touristTax;
+    }
+    if (typeof price !== "undefined") {
+      offer.basePriceHT = price;
     }
     if (typeof ownerId !== "undefined") {
       const owner = await User.findOne(ownerId);
