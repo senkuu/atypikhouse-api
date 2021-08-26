@@ -70,12 +70,16 @@ export class Offer extends BaseEntity {
   longitude: number;
 
   @Field()
-  @Column({ type: "decimal", nullable: true }) // Vérifier si type ok
+  @Column({ type: "decimal" }) // Vérifier si type ok
   touristTax!: number; // = Taxe de séjour
 
   @Field()
-  @Column({ type: "decimal", nullable: true })
-  basePriceHT!: number;
+  @Column({ type: "decimal" })
+  priceHT!: number;
+
+  @Field()
+  @Column({ type: "decimal" })
+  priceTTC!: number;
 
   @Field({ nullable: true })
   distance: number;
