@@ -1,7 +1,6 @@
 import { Arg, Mutation, Query, Resolver } from "type-graphql";
 
 import { Booking, BookingStatuses, CancelReasons } from "../entities/Booking";
-//import {BookingStatuses, CancelReasons} from "../entities/Booking";
 import { Offer } from "../entities/Offer";
 import { User } from "../entities/User";
 
@@ -21,7 +20,12 @@ export class BookingResolver {
   async createBooking(
     @Arg("offerId") offerId: number,
     @Arg("occupantId") occupantId: number,
-    @Arg("startDate") startDate: Date,
+    @Arg("adults") adults: number,
+    @Arg("children") children: number,
+    @Arg("priceHT") priceHT: number,
+    @Arg("priceTTC") priceTTC: number,
+    @Arg("startDate")
+    startDate: Date,
     @Arg("endDate") endDate: Date,
     @Arg("status") status: BookingStatuses,
     @Arg("cancelReason") cancelReason: CancelReasons
@@ -38,6 +42,14 @@ export class BookingResolver {
 
     // Vérifier si utile, et le cas échéant si fonctionnel
     if (typeof startDate === "undefined" || typeof endDate === "undefined") {
+      return null;
+    }
+
+    if (typeof adults === "undefined" || typeof children === "undefined") {
+      return null;
+    }
+
+    if (typeof priceHT === "undefined" || typeof priceTTC === "undefined") {
       return null;
     }
 
@@ -65,6 +77,10 @@ export class BookingResolver {
     return Booking.create({
       offer,
       occupant,
+      adults,
+      children,
+      priceHT,
+      priceTTC,
       startDate,
       endDate,
       status,

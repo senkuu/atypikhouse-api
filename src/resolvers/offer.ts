@@ -111,6 +111,9 @@ export class OfferResolver {
     @Arg("coordinates", () => CoordinatesInput, { nullable: true })
     coordinates: CoordinatesInput,
     @Arg("address", { nullable: true }) address: string,
+    @Arg("touristTax") touristTax: number,
+    @Arg("priceHT") priceHT: number,
+    @Arg("priceTTC") priceTTC: number,
     @Arg("cityId") cityId: number,
     @Arg("ownerId") ownerId: number,
     @Arg("offerTypeId") offerTypeId: number,
@@ -134,6 +137,11 @@ export class OfferResolver {
     // Faire des vérifications supplémentaires sur la validité ici ?
     if (typeof title === "undefined" || typeof description === "undefined") {
       console.log("SORTIE 3");
+      return null;
+    }
+
+    if (typeof priceHT === "undefined" || typeof priceTTC === "undefined") {
+      console.log("SORTIE 3b");
       return null;
     }
 
@@ -221,6 +229,9 @@ export class OfferResolver {
     return Offer.create({
       title,
       description,
+      touristTax: touristTax ?? 0,
+      priceHT,
+      priceTTC,
       coordinates: formattedCoordinates,
       city,
       address,
@@ -239,6 +250,10 @@ export class OfferResolver {
     @Arg("description", () => String, { nullable: true }) description: string,
     @Arg("coordinates", () => CoordinatesInput, { nullable: true })
     coordinates: CoordinatesInput,
+    @Arg("address", { nullable: true }) address: string,
+    @Arg("touristTax", { nullable: true }) touristTax: number,
+    @Arg("priceHT", { nullable: true }) priceHT: number,
+    @Arg("priceTTC", { nullable: true }) priceTTC: number,
     @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
     @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
     //@Arg("criteriaIds", () => [Number], { nullable: true })
@@ -267,6 +282,18 @@ export class OfferResolver {
         type: "Point",
         coordinates: [coordinates.latitude, coordinates.longitude],
       };
+    }
+    if (typeof address !== "undefined") {
+      offer.address = address;
+    }
+    if (typeof touristTax !== "undefined") {
+      offer.touristTax = touristTax;
+    }
+    if (typeof priceHT !== "undefined") {
+      offer.priceHT = priceHT;
+    }
+    if (typeof priceTTC !== "undefined") {
+      offer.priceTTC = priceTTC;
     }
     if (typeof ownerId !== "undefined") {
       const owner = await User.findOne(ownerId);
