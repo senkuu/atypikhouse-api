@@ -79,8 +79,8 @@ export class User extends BaseEntity {
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
 
-  @Field(() => City)
-  @ManyToOne(() => City, (city) => city.users)
+  @Field(() => City, { nullable: true })
+  @ManyToOne(() => City, (city) => city.users, { nullable: true })
   city: City;
 
   @Field(() => [Notice])
