@@ -25,6 +25,7 @@ import { RegisterInput } from "./RegisterInput";
 import { FieldError } from "./FieldError";
 import { isValidEmail } from "../utils/isValidEmail";
 import { isValidUrl } from "../utils/isValidUrl";
+import { City } from "../entities/City";
 
 interface ILoginUserSession extends Session {
   userId: number;
@@ -244,6 +245,7 @@ export class UserResolver {
     @Arg("surname", { nullable: true }) surname: string,
     @Arg("description", { nullable: true }) description: string,
     @Arg("website", { nullable: true }) website: string,
+    @Arg("cityId", { nullable: true }) cityId: number,
     @Arg("userType", { nullable: true }) userType: UserTypes,
     @Arg("status", { nullable: true }) status: UserStatuses
   ): Promise<UserResponse> {
@@ -331,6 +333,13 @@ export class UserResolver {
           field: "website",
           message: "Le format du site web est invalide",
         });
+      }
+    }
+
+    if (typeof cityId !== "undefined") {
+      const city = await City.findOne(cityId);
+      if (city) {
+        user.city = city;
       }
     }
 
