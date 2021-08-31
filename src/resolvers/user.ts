@@ -250,7 +250,7 @@ export class UserResolver {
     const user = await User.findOne(id);
     if (!user) {
       return {
-        errors: [{ field: "id", message: "Cet utilisateur n'existe pas" }],
+        errors: [{ field: "id", message: "L'utilisateur n'existe pas" }],
       };
     }
     const errors: FieldError[] = [];
@@ -261,7 +261,7 @@ export class UserResolver {
       } else {
         errors.push({
           field: "email",
-          message: "Cette adresse mail est invalide",
+          message: "L'adresse mail est invalide",
         });
       }
     }
