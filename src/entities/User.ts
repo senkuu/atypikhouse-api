@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -14,6 +15,7 @@ import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { Notice } from "./Notice";
 import { Photo } from "./Photo";
+import { City } from "./City";
 
 export enum UserTypes {
   DEFAULT = "default",
@@ -76,6 +78,10 @@ export class User extends BaseEntity {
   @Field(() => [Booking])
   @OneToMany(() => Booking, (booking) => booking.occupant)
   bookings: Booking[];
+
+  @Field(() => City)
+  @ManyToOne(() => City, (city) => city.users)
+  city: City;
 
   @Field(() => [Notice])
   @OneToMany(() => Notice, (notice) => notice.user)
