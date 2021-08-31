@@ -23,6 +23,8 @@ import { sendEmail } from "../utils/sendEmail";
 // import type
 import { RegisterInput } from "./RegisterInput";
 import { FieldError } from "./FieldError";
+import { isValidEmail } from "../utils/isValidEmail";
+import { isValidUrl } from "../utils/isValidUrl";
 
 interface ILoginUserSession extends Session {
   userId: number;
@@ -232,5 +234,129 @@ export class UserResolver {
     (req.session as ILoginUserSession).userId = user.id;
 
     return { user };
+  }
+
+  @Mutation(() => UserResponse, { nullable: true })
+  async updateUser(
+    @Arg("id") id: number,
+    @Arg("email", { nullable: true }) email: string,
+    @Arg("name", { nullable: true }) name: string,
+    @Arg("surname", { nullable: true }) surname: string,
+    @Arg("description", { nullable: true }) description: string,
+    @Arg("website", { nullable: true }) website: string,
+    @Arg("userType", { nullable: true }) userType: UserTypes,
+    @Arg("status", { nullable: true }) status: UserStatuses
+  ): Promise<UserResponse> {
+    const user = await User.findOne(id);
+    if (!user) {
+      return {
+        errors: [{ field: "id", message: "Cet utilisateur n'existe pas" }],
+      };
+    }
+    const errors: FieldError[] = [];
+
+    if (typeof email !== "undefined") {
+      if (isValidEmail(email)) {
+        user.email = email;
+      } else {
+        errors.push({
+          field: "email",
+          message: "Cette adresse mail est invalide",
+        });
+      }
+    }
+
+    if (typeof name !== "undefined") {
+      let validField = true;
+      if (name.length <= 2) {
+        errors.push({
+          field: "name",
+          message: "Le prénom doit comporter au moins 2 caractères",
+        });
+        validField = false;
+      }
+
+      if (name.length >= 26) {
+        errors.push({
+          field: "name",
+          message: "Le prénom doit comporter moins de 26 caractères",
+        });
+        validField = false;
+      }
+
+      if (validField) {
+        user.name = name;
+      }
+    }
+
+    if (typeof surname !== "undefined") {
+      let validField = true;
+      if (surname.length <= 2) {
+        errors.push({
+          field: "surname",
+          message: "Le prénom doit comporter au moins 2 caractères",
+        });
+        validField = false;
+      }
+
+      if (surname.length >= 26) {
+        errors.push({
+          field: "surname",
+          message: "Le prénom doit comporter moins de 26 caractères",
+        });
+        validField = false;
+      }
+
+      if (validField) {
+        user.surname = surname;
+      }
+    }
+
+    if (typeof description !== "undefined") {
+      if (description.length > 500) {
+        errors.push({
+          field: "description",
+          message: "La description doit comporter 500 caractères maximum",
+        });
+      } else {
+        user.description = description;
+      }
+    }
+
+    if (typeof website !== "undefined") {
+      if (isValidUrl(website)) {
+        user.website = website;
+      } else {
+        errors.push({
+          field: "website",
+          message: "Le format du site web est invalide",
+        });
+      }
+    }
+
+    if (typeof userType !== "undefined") {
+      if (Object.values(UserTypes).includes(userType)) {
+        user.userType = userType;
+      } else {
+        errors.push({
+          field: "userType",
+          message: "Ce type d'utilisateur n'existe pas",
+        });
+      }
+    }
+
+    if (typeof status !== "undefined") {
+      if (Object.values(UserStatuses).includes(status)) {
+        user.status = status;
+      } else {
+        errors.push({
+          field: "status",
+          message: "Ce statut n'existe pas",
+        });
+      }
+    }
+
+    User.update({ id }, { ...user });
+    return { errors, user };
   }
 }
