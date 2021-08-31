@@ -65,6 +65,10 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   description: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  website: string;
+
   @Field(() => [Offer])
   @OneToMany(() => Offer, (offer) => offer.owner)
   offers: Offer[];
