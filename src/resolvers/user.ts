@@ -249,7 +249,7 @@ export class UserResolver {
     @Arg("userType", { nullable: true }) userType: UserTypes,
     @Arg("status", { nullable: true }) status: UserStatuses
   ): Promise<UserResponse> {
-    const user = await User.findOne(id);
+    const user = await User.findOne(id, { relations: ["city"] });
     if (!user) {
       return {
         errors: [{ field: "id", message: "L'utilisateur n'existe pas" }],
