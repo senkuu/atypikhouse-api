@@ -15,6 +15,7 @@ import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { Notice } from "./Notice";
 import { Photo } from "./Photo";
+import { Planning } from "./Planning";
 import { City } from "./City";
 
 export enum UserTypes {
@@ -96,6 +97,10 @@ export class User extends BaseEntity {
   @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
   photo: Photo;
+
+  @Field(() => [Planning])
+  @OneToMany(() => Planning, (planning) => planning.owner)
+  planningData: Planning[];
 
   @Field()
   @Column({

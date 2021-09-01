@@ -53,8 +53,6 @@ export class OfferResolver {
       [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
     });
 
-    console.log(offers);
-
     let calculateDistances = false;
     let cityFound = false;
     let originPoint: Position = [];

@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
+import { User } from "./User";
 
 //TODO: Resolver à faire
 @ObjectType()
@@ -19,16 +20,12 @@ export class Planning extends BaseEntity {
   id!: number;
 
   @Field(() => Offer)
-  @ManyToOne(() => Offer, (offer) => offer.planningData)
+  @ManyToOne(() => Offer, (offer) => offer.planningData, { nullable: true })
   offer: Offer;
 
-  @Field()
-  @Column()
-  name!: string;
-
-  @Field()
-  @Column({ nullable: true })
-  description: string;
+  @Field(() => User)
+  @ManyToOne(() => User, (user) => user.planningData, { nullable: true })
+  owner: User;
 
   @Field()
   @Column({ type: "timestamp" })

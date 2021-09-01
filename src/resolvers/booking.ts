@@ -3,12 +3,34 @@ import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Booking, BookingStatuses, CancelReasons } from "../entities/Booking";
 import { Offer } from "../entities/Offer";
 import { User } from "../entities/User";
+import { FindConditions, Not } from "typeorm";
+import { Planning } from "../entities/Planning";
 
 @Resolver()
 export class BookingResolver {
-  @Query(() => [Booking])
-  bookings(): Promise<Booking[]> {
-    return Booking.find({ relations: ["offer", "occupant"] });
+  @Query(() => [Booking], { nullable: true })
+  async bookings(
+    @Arg("offerId", { nullable: true }) offerId?: number,
+    @Arg("hideCancelled", { nullable: true }) hideCancelled?: boolean
+  ): Promise<Booking[] | null> {
+    let findConditions: FindConditions<Booking> = {};
+    if (hideCancelled) {
+      findConditions["status"] = Not(BookingStatuses.CANCELLED);
+    }
+
+    if (typeof offerId !== "undefined") {
+      const offer = await Offer.findOne(offerId);
+      if (!offer) {
+        return null;
+      }
+
+      findConditions["offer"] = offer;
+    }
+
+    return Booking.find({
+      relations: ["offer", "occupant"],
+      where: findConditions,
+    });
   }
 
   @Query(() => Booking, { nullable: true })
@@ -16,6 +38,7 @@ export class BookingResolver {
     return Booking.findOne(id, { relations: ["offer", "occupant"] });
   }
 
+  // TODO: Ignorer la vérification de dates sur des résas annulées
   @Mutation(() => Booking)
   async createBooking(
     @Arg("offerId") offerId: number,
@@ -58,6 +81,40 @@ export class BookingResolver {
       return null;
     }
 
+    let existingBookings = await this.bookings(offerId, true);
+
+    if (
+      existingBookings !== null &&
+      existingBookings.some(
+        (booking) => booking.endDate > startDate && booking.startDate < endDate
+      )
+    ) {
+      return null;
+    }
+
+    let planningData: Planning[] = [];
+
+    let offerPlanningData = await Planning.find({ where: { offer: offer } });
+    if (offerPlanningData !== null) {
+      planningData.push(...offerPlanningData);
+    }
+
+    let ownerPlanningData = await Planning.find({
+      where: { owner: offer.owner },
+    });
+    if (ownerPlanningData !== null) {
+      planningData.push(...ownerPlanningData);
+    }
+
+    if (
+      planningData !== null &&
+      planningData.some(
+        (data) => data.endDate > startDate && data.startDate < endDate
+      )
+    ) {
+      return null;
+    }
+
     if (typeof status === "string") {
       if (!Object.values(BookingStatuses).includes(status)) {
         status = BookingStatuses.WAITING_APPROVAL;
@@ -88,6 +145,7 @@ export class BookingResolver {
     }).save();
   }
 
+  // TODO : Faire la vérification de dates comme sur createBooking
   @Mutation(() => Booking, { nullable: true })
   async updateBooking(
     @Arg("id") id: number,
@@ -100,12 +158,60 @@ export class BookingResolver {
     if (!booking) {
       return null;
     }
+
+    let startDateSave = booking.startDate;
+    let endDateSave = booking.endDate;
+
     if (typeof startDate !== "undefined") {
       booking.startDate = startDate;
     }
     if (typeof endDate !== "undefined") {
       booking.endDate = endDate;
     }
+
+    if (endDate < startDate) {
+      booking.startDate = startDateSave;
+      booking.endDate = endDateSave;
+    }
+
+    let existingBookings = await this.bookings(booking.offer.id, true);
+
+    if (
+      existingBookings !== null &&
+      existingBookings.some(
+        (booking) => booking.endDate > startDate && booking.startDate < endDate
+      )
+    ) {
+      booking.startDate = startDateSave;
+      booking.endDate = endDateSave;
+    }
+
+    let planningData: Planning[] = [];
+
+    let offerPlanningData = await Planning.find({
+      where: { offer: booking.offer },
+    });
+    if (offerPlanningData !== null) {
+      planningData.push(...offerPlanningData);
+    }
+
+    let ownerPlanningData = await Planning.find({
+      where: { owner: booking.offer.owner },
+    });
+    if (ownerPlanningData !== null) {
+      planningData.push(...ownerPlanningData);
+    }
+
+    if (
+      planningData !== null &&
+      planningData.some(
+        (data) => data.endDate > startDate && data.startDate < endDate
+      )
+    ) {
+      booking.startDate = startDateSave;
+      booking.endDate = endDateSave;
+    }
+
     if (typeof status === "string") {
       if (Object.values(BookingStatuses).includes(status)) {
         booking.status = status;
