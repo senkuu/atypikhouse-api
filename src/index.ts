@@ -5,8 +5,7 @@ require("dotenv").config();
 import express from "express";
 import session from "express-session";
 import cors from "cors";
-import { ApolloServer } from "apollo-server-express";
-import path from "path";
+import { ApolloServer, gql } from "apollo-server-express";
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -41,6 +40,7 @@ import { PhotoType } from "./entities/PhotoType";
 import { Planning } from "./entities/Planning";
 import { NoticeType } from "./entities/NoticeType";
 import { Notice } from "./entities/Notice";
+import { FileUploadResolver } from "./resolvers/fileUpload";
 
 const main = async () => {
   const connection = await createConnection({
@@ -106,6 +106,22 @@ const main = async () => {
     })
   );
 
+  const typeDefs = gql`
+    scalar Upload
+
+    type File {
+      url: String!
+    }
+
+    type Query {
+      hello: String!
+    }
+
+    type Mutation {
+      uploadFile(file: Upload!): File!
+    }
+  `;
+
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [
@@ -118,9 +134,11 @@ const main = async () => {
         CityResolver,
         RegionResolver,
         DepartementResolver,
+        FileUploadResolver,
       ],
       validate: false,
     }),
+    typeDefs: typeDefs,
     context: ({ req, res }): MyContext => ({ req, res, redis }),
   });
 
@@ -128,6 +146,8 @@ const main = async () => {
     app,
     cors: false,
   });
+
+  app.use(express.static("public"));
 
   app.listen(4000, () => {
     console.log(`server started on localhost:4000`);
