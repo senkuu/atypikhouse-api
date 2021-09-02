@@ -19,11 +19,11 @@ export class Planning extends BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Field(() => Offer)
+  @Field(() => Offer, { nullable: true })
   @ManyToOne(() => Offer, (offer) => offer.planningData, { nullable: true })
   offer: Offer;
 
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.planningData, { nullable: true })
   owner: User;
 
