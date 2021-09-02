@@ -59,6 +59,53 @@ export class UserResolver {
     return User.findOne((req.session as ILoginUserSession).userId);
   }
 
+  // TODO: Factoriser
+  @Query(() => [User])
+  async users(
+    @Arg("getOffers", { nullable: true }) getOffers: boolean,
+    @Arg("getBookings", { nullable: true }) getBookings: boolean,
+    @Arg("getCities", { nullable: true }) getCities: boolean,
+    @Arg("getNotices", { nullable: true }) getNotices: boolean,
+    @Arg("getPhotos", { nullable: true }) getPhotos: boolean
+  ): Promise<User[]> {
+    let relations: string[] = [];
+    if (typeof getOffers !== "undefined" && getOffers) {
+      relations.push("offers");
+    }
+
+    if (typeof getBookings !== "undefined" && getBookings) {
+      relations.push("bookings");
+    }
+
+    if (typeof getCities !== "undefined" && getCities) {
+      relations.push("city");
+    }
+
+    if (typeof getNotices !== "undefined" && getNotices) {
+      relations.push("notices", "linkedNotices");
+    }
+
+    if (typeof getPhotos !== "undefined" && getPhotos) {
+      relations.push("photo");
+    }
+
+    return User.find({ relations });
+  }
+
+  @Query(() => User, { nullable: true })
+  async user(@Arg("id") id: number): Promise<User | undefined> {
+    return User.findOne(id, {
+      relations: [
+        "offers",
+        "bookings",
+        "city",
+        "notices",
+        "linkedNotices",
+        "photo",
+      ],
+    });
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: RegisterInput,
