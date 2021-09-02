@@ -39,6 +39,15 @@ class LoginInput {
   password: string;
 }
 
+enum UserQueryRelations {
+  BOOKINGS = "bookings",
+  OFFERS = "offers",
+  CITY = "city",
+  NOTICES = "notices",
+  LINKED_NOTICES = "linkedNotices",
+  PHOTO = "photo",
+}
+
 @ObjectType()
 class UserResponse {
   @Field(() => [FieldError], { nullable: true })
@@ -62,31 +71,17 @@ export class UserResolver {
   // TODO: Factoriser
   @Query(() => [User])
   async users(
-    @Arg("getOffers", { nullable: true }) getOffers: boolean,
-    @Arg("getBookings", { nullable: true }) getBookings: boolean,
-    @Arg("getCities", { nullable: true }) getCities: boolean,
-    @Arg("getNotices", { nullable: true }) getNotices: boolean,
-    @Arg("getPhotos", { nullable: true }) getPhotos: boolean
+    @Arg("relations", () => [String], { nullable: true })
+    relationsInput: UserQueryRelations[]
   ): Promise<User[]> {
     let relations: string[] = [];
-    if (typeof getOffers !== "undefined" && getOffers) {
-      relations.push("offers");
-    }
 
-    if (typeof getBookings !== "undefined" && getBookings) {
-      relations.push("bookings");
-    }
-
-    if (typeof getCities !== "undefined" && getCities) {
-      relations.push("city");
-    }
-
-    if (typeof getNotices !== "undefined" && getNotices) {
-      relations.push("notices", "linkedNotices");
-    }
-
-    if (typeof getPhotos !== "undefined" && getPhotos) {
-      relations.push("photo");
+    if (typeof relationsInput !== "undefined") {
+      relationsInput.forEach((relation) => {
+        if (Object.values(UserQueryRelations).includes(relation)) {
+          relations.push(relation);
+        }
+      });
     }
 
     return User.find({ relations });
