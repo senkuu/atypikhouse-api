@@ -17,7 +17,6 @@ import { OfferCriteria } from "./OfferCriteria";
 import { City } from "./City";
 import { Photo } from "./Photo";
 import { Planning } from "./Planning";
-//import { CoordinatesInput } from "../resolvers/CoordinatesInput";
 import { Point } from "geojson";
 import { DeleteReasons } from "./DeleteReasons";
 
@@ -144,4 +143,22 @@ export class Offer extends BaseEntity {
   @Field(() => String)
   @UpdateDateColumn()
   updatedAt: Date;
+
+  static getOrderedAndPaginatedOffersFromCoordinates(
+    coordinates: { lat: number; long: number },
+    limit: number = 25,
+    cursor: number = 0
+  ) {
+    return this.createQueryBuilder("offer")
+      .where("offer.status = :status", { status: "AVAILABLE" })
+      .orderBy(
+        "ST_Distance(ST_MakePoint(:userLong, :userLat)::geography, offer.coordinates)",
+        "ASC"
+      )
+      .orderBy("")
+      .skip(cursor)
+      .take(limit)
+      .setParameters({ userLong: coordinates.long, userLat: coordinates.lat })
+      .getManyAndCount();
+  }
 }

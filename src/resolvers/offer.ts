@@ -1,4 +1,12 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Field,
+  Int,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from "type-graphql";
 
 import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
@@ -8,25 +16,29 @@ import { CriteriaInput } from "./CriteriaInput";
 import { OfferCriteria } from "../entities/OfferCriteria";
 import { BooleanValues } from "./CriteriaInput";
 import { CoordinatesInput } from "./CoordinatesInput";
-import { Point, Position } from "geojson";
+import { Point } from "geojson";
 import { City } from "../entities/City";
-import {
-  calculateOfferDistances,
-  calculateOfferScore,
-  sortOffersByDistance,
-} from "../utils/sortOffers";
 import { DeleteReasons } from "../entities/DeleteReasons";
+
+@ObjectType()
+class OffersResponse {
+  @Field(() => [Offer])
+  offers: Offer[];
+  @Field(() => Int)
+  count: number;
+}
 
 @Resolver()
 export class OfferResolver {
   // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus
-  @Query(() => [Offer])
+  @Query(() => OffersResponse)
   async offers(
-    @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
     @Arg("cityId", { nullable: true }) cityId: number,
     @Arg("getCities", { nullable: true }) getCities: boolean,
-    @Arg("getDepartements", { nullable: true }) getDepartements: boolean
-  ): Promise<Offer[]> {
+    @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
+    @Arg("limit", () => Int) limit: number,
+    @Arg("cursor", () => Int, { nullable: true }) cursor: number | null
+  ): Promise<OffersResponse> {
     let relations = [
       "owner",
       "bookings",
@@ -47,47 +59,22 @@ export class OfferResolver {
       }
     }
 
-    let offers = await Offer.find({ relations });
+    let [
+      offers,
+      offersCount,
+    ] = await Offer.getOrderedAndPaginatedOffersFromCoordinates(
+      {
+        lat: 48.85341,
+        long: 2.3488,
+      },
+      limit,
+      cursor ? cursor : 0
+    );
 
-    offers.forEach((offer) => {
-      [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
-    });
-
-    console.log(offers);
-
-    let calculateDistances = false;
-    let cityFound = false;
-    let originPoint: Position = [];
-    if (
-      typeof coordinates !== "undefined" &&
-      coordinates.latitude >= -90 &&
-      coordinates.latitude <= 90 &&
-      coordinates.longitude >= -180 &&
-      coordinates.longitude <= 180
-    ) {
-      originPoint = [coordinates.latitude, coordinates.longitude];
-      calculateDistances = true;
-    } else if (typeof cityId !== "undefined") {
-      const city = await City.findOne(cityId);
-      if (city) {
-        originPoint = city.coordinates.coordinates;
-        calculateDistances = true;
-        cityFound = true;
-      }
-    }
-
-    if (calculateDistances) {
-      offers = calculateOfferDistances(originPoint, offers);
-      offers = sortOffersByDistance(offers);
-
-      offers = cityFound
-        ? calculateOfferScore(offers, true, cityId)
-        : calculateOfferScore(offers, true);
-    } else {
-      calculateOfferScore(offers, false);
-    }
-
-    return offers;
+    return {
+      offers: [...offers],
+      count: offersCount,
+    };
   }
 
   @Query(() => Offer, { nullable: true })
