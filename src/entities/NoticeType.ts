@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
+import { Notice } from "./Notice";
 
 //TODO: Resolver à faire
 @ObjectType()
@@ -24,6 +25,10 @@ export class NoticeType extends BaseEntity {
   @Field()
   @Column()
   defaultText!: string;
+
+  @Field(() => [Notice], { nullable: true })
+  @OneToMany(() => Notice, (notice) => notice.noticeType, { nullable: true })
+  notices: Notice[];
 
   @Field(() => String)
   @CreateDateColumn()
