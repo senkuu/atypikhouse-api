@@ -71,28 +71,28 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   website: string;
 
-  @Field(() => [Offer])
-  @OneToMany(() => Offer, (offer) => offer.owner)
+  @Field(() => [Offer], { nullable: true })
+  @OneToMany(() => Offer, (offer) => offer.owner, { nullable: true })
   offers: Offer[];
 
-  @Field(() => [Booking])
-  @OneToMany(() => Booking, (booking) => booking.occupant)
+  @Field(() => [Booking], { nullable: true })
+  @OneToMany(() => Booking, (booking) => booking.occupant, { nullable: true })
   bookings: Booking[];
 
   @Field(() => City, { nullable: true })
   @ManyToOne(() => City, (city) => city.users, { nullable: true })
   city: City;
 
-  @Field(() => [Notice])
-  @OneToMany(() => Notice, (notice) => notice.user)
+  @Field(() => [Notice], { nullable: true })
+  @OneToMany(() => Notice, (notice) => notice.user, { nullable: true })
   notices: Notice[];
 
-  @Field(() => [Notice])
-  @OneToMany(() => Notice, (notice) => notice.linkedUser)
+  @Field(() => [Notice], { nullable: true })
+  @OneToMany(() => Notice, (notice) => notice.linkedUser, { nullable: true })
   linkedNotices: Notice[];
 
   // Photo de profil
-  @Field(() => Photo)
+  @Field(() => Photo, { nullable: true })
   @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
   photo: Photo;

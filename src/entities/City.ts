@@ -28,7 +28,7 @@ export class City extends BaseEntity {
   @ManyToOne(() => Departement, (departement) => departement.cities)
   departement!: Departement;
 
-  @Field(() => [Offer])
+  @Field(() => [Offer], { nullable: true })
   @OneToMany(() => Offer, (offer) => offer.city)
   offers: Offer[];
 
@@ -36,8 +36,8 @@ export class City extends BaseEntity {
   @Column()
   population!: number;
 
-  @Field(() => [User])
-  @OneToMany(() => User, (user) => user.city)
+  @Field(() => [User], { nullable: true })
+  @OneToMany(() => User, (user) => user.city, { nullable: true })
   users: User[];
 
   // TODO: Implémenter les coordonnées en tant que champ

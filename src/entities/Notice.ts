@@ -29,31 +29,31 @@ export class Notice extends BaseEntity {
   @ManyToOne(() => User, (user) => user.notices)
   user!: User;
 
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.linkedNotices, { nullable: true })
   linkedUser: User;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder1: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder2: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder3: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder4: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder5: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   url: string;
 

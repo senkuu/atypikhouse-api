@@ -47,13 +47,13 @@ export class Offer extends BaseEntity {
 
   @Field()
   @Column({ type: "text" })
-  description: string;
+  description!: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   address: string;
 
-  // // TODO: Implémenter les coordonnées en tant que champ
+  // TODO: Implémenter les coordonnées en tant que champ
   //@Field(() => GeoJSONPoint)
   @Index({ spatial: true })
   @Column({
@@ -102,23 +102,24 @@ export class Offer extends BaseEntity {
   @ManyToOne(() => OfferType, (offerType) => offerType.offers)
   offerType!: OfferType;
 
-  @Field(() => [Booking])
-  @OneToMany(() => Booking, (booking) => booking.offer)
+  @Field(() => [Booking], { nullable: true })
+  @OneToMany(() => Booking, (booking) => booking.offer, { nullable: true })
   bookings: Booking[];
 
-  @Field(() => [Photo])
-  @OneToMany(() => Photo, (photo) => photo.offer)
+  @Field(() => [Photo], { nullable: true })
+  @OneToMany(() => Photo, (photo) => photo.offer, { nullable: true })
   photos: Photo[];
 
-  @Field(() => [OfferCriteria])
+  @Field(() => [OfferCriteria], { nullable: true })
   @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.offer, {
+    nullable: true,
     onUpdate: "CASCADE",
     onDelete: "CASCADE",
   })
   offerCriterias: OfferCriteria[];
 
-  @Field(() => [Planning])
-  @OneToMany(() => Planning, (planning) => planning.offer)
+  @Field(() => [Planning], { nullable: true })
+  @OneToMany(() => Planning, (planning) => planning.offer, { nullable: true })
   planningData: Planning[];
 
   @Field()
