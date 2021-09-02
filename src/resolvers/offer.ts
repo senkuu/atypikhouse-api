@@ -16,16 +16,20 @@ import {
   sortOffersByDistance,
 } from "../utils/sortOffers";
 import { DeleteReasons } from "../entities/DeleteReasons";
+import { FindConditions } from "typeorm";
 
 @Resolver()
 export class OfferResolver {
-  // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus
+  // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus.
+  // / cityId : tri par proximité en fonction du code ville INSEE renseigné
+  // / ownerId : filtre les offres appartenant à un propriétaire
   @Query(() => [Offer])
   async offers(
     @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
     @Arg("cityId", { nullable: true }) cityId: number,
     @Arg("getCities", { nullable: true }) getCities: boolean,
-    @Arg("getDepartements", { nullable: true }) getDepartements: boolean
+    @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
+    @Arg("ownerId", { nullable: true }) ownerId: number
   ): Promise<Offer[]> {
     let relations = [
       "owner",
@@ -47,7 +51,15 @@ export class OfferResolver {
       }
     }
 
-    let offers = await Offer.find({ relations });
+    let findCondition: FindConditions<Offer> = {};
+    if (typeof ownerId !== "undefined") {
+      let owner = await User.findOne(ownerId);
+      if (owner !== null) {
+        findCondition["owner"] = owner;
+      }
+    }
+
+    let offers = await Offer.find({ relations, where: findCondition });
 
     offers.forEach((offer) => {
       [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
