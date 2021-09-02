@@ -30,8 +30,8 @@ export class Criteria extends BaseEntity {
   @Column({ unique: true })
   name!: string;
 
-  @Field()
-  @Column()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   additional: string;
 
   @Field()
@@ -42,12 +42,17 @@ export class Criteria extends BaseEntity {
   })
   criteriaType!: CriteriaTypes;
 
-  @ManyToMany(() => OfferType, (offerType) => offerType.criterias)
+  @Field(() => [OfferType], { nullable: true })
+  @ManyToMany(() => OfferType, (offerType) => offerType.criterias, {
+    nullable: true,
+  })
   @JoinTable()
   offerTypes: OfferType[];
 
-  @Field(() => [OfferCriteria])
-  @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.criteria)
+  @Field(() => [OfferCriteria], { nullable: true })
+  @OneToMany(() => OfferCriteria, (offerCriteria) => offerCriteria.criteria, {
+    nullable: true,
+  })
   offerCriterias: OfferCriteria[];
 
   @Field(() => String)

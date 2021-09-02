@@ -19,7 +19,9 @@ export class Region extends BaseEntity {
   @Column()
   name!: string;
 
-  @Field(() => [Departement])
-  @OneToMany(() => Departement, (departement) => departement.region)
-  departements!: Departement[];
+  @Field(() => [Departement], { nullable: true })
+  @OneToMany(() => Departement, (departement) => departement.region, {
+    nullable: true,
+  })
+  departements: Departement[];
 }

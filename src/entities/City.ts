@@ -11,6 +11,7 @@ import { Field, ObjectType } from "type-graphql";
 import { Departement } from "./Departement";
 import { Offer } from "./Offer";
 import { Point } from "geojson";
+import { User } from "./User";
 
 @ObjectType()
 @Entity()
@@ -27,13 +28,17 @@ export class City extends BaseEntity {
   @ManyToOne(() => Departement, (departement) => departement.cities)
   departement!: Departement;
 
-  @Field(() => [Offer])
+  @Field(() => [Offer], { nullable: true })
   @OneToMany(() => Offer, (offer) => offer.city)
   offers: Offer[];
 
   @Field()
   @Column()
   population!: number;
+
+  @Field(() => [User], { nullable: true })
+  @OneToMany(() => User, (user) => user.city, { nullable: true })
+  users: User[];
 
   // TODO: Implémenter les coordonnées en tant que champ
   //@Field(() => GeoJSONPoint)

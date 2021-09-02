@@ -20,7 +20,7 @@ export class PhotoType extends BaseEntity {
   @Column()
   name!: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   description: string;
 

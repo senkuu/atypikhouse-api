@@ -3,9 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
@@ -29,31 +27,31 @@ export class Notice extends BaseEntity {
   @ManyToOne(() => User, (user) => user.notices)
   user!: User;
 
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   @ManyToOne(() => User, (user) => user.linkedNotices, { nullable: true })
   linkedUser: User;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder1: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder2: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder3: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder4: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   placeholder5: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   url: string;
 
@@ -66,8 +64,7 @@ export class Notice extends BaseEntity {
   urlType!: UrlType;
 
   @Field(() => NoticeType)
-  @OneToOne(() => NoticeType)
-  @JoinColumn()
+  @ManyToOne(() => NoticeType, (noticeType) => noticeType.notices)
   noticeType: NoticeType;
 
   @Field(() => String)

@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -14,6 +15,7 @@ import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { Notice } from "./Notice";
 import { Photo } from "./Photo";
+import { City } from "./City";
 
 export enum UserTypes {
   DEFAULT = "default",
@@ -61,28 +63,36 @@ export class User extends BaseEntity {
   @Column()
   password!: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   description: string;
 
-  @Field(() => [Offer])
-  @OneToMany(() => Offer, (offer) => offer.owner)
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  website: string;
+
+  @Field(() => [Offer], { nullable: true })
+  @OneToMany(() => Offer, (offer) => offer.owner, { nullable: true })
   offers: Offer[];
 
-  @Field(() => [Booking])
-  @OneToMany(() => Booking, (booking) => booking.occupant)
+  @Field(() => [Booking], { nullable: true })
+  @OneToMany(() => Booking, (booking) => booking.occupant, { nullable: true })
   bookings: Booking[];
 
-  @Field(() => [Notice])
-  @OneToMany(() => Notice, (notice) => notice.user)
+  @Field(() => City, { nullable: true })
+  @ManyToOne(() => City, (city) => city.users, { nullable: true })
+  city: City;
+
+  @Field(() => [Notice], { nullable: true })
+  @OneToMany(() => Notice, (notice) => notice.user, { nullable: true })
   notices: Notice[];
 
-  @Field(() => [Notice])
-  @OneToMany(() => Notice, (notice) => notice.linkedUser)
+  @Field(() => [Notice], { nullable: true })
+  @OneToMany(() => Notice, (notice) => notice.linkedUser, { nullable: true })
   linkedNotices: Notice[];
 
   // Photo de profil
-  @Field(() => Photo)
+  @Field(() => Photo, { nullable: true })
   @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
   photo: Photo;

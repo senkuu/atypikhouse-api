@@ -25,25 +25,25 @@ export class Photo extends BaseEntity {
   @Column()
   url!: string;
 
-  @Field(() => User)
-  @OneToOne(() => User, (user) => user.photo)
-  user!: User;
+  @Field(() => User, { nullable: true })
+  @OneToOne(() => User, (user) => user.photo, { nullable: true })
+  user: User;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   description: string;
 
-  @Field(() => Booking)
+  @Field(() => Booking, { nullable: true })
   @OneToOne(() => Booking, { nullable: true })
   @JoinColumn()
   booking: Booking;
 
-  @Field(() => Offer)
+  @Field(() => Offer, { nullable: true })
   @ManyToOne(() => Offer, (offer) => offer.photos, { nullable: true })
   offer: Offer;
 
   @Field(() => PhotoType)
   @OneToOne(() => PhotoType)
   @JoinColumn()
-  photoType: PhotoType;
+  photoType!: PhotoType;
 }

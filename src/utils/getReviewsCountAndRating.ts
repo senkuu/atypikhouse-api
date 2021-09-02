@@ -1,10 +1,17 @@
 import { Offer } from "../entities/Offer";
 
 export function getAverageRating(offer: Offer) {
-  let ratings = offer.bookings.map((booking) => booking.review.rating);
-  if (ratings.length === 0) {
+  if (offer.bookings.length === 0) {
     return offer;
   }
+
+  let bookings = offer.bookings.filter((booking) => booking.review !== null);
+
+  if (bookings.length === 0) {
+    return offer;
+  }
+
+  let ratings = bookings.map((booking) => booking.review.rating);
 
   let reducer = (total: number, currentValue: number) => total + currentValue;
   let sum = ratings.reduce(reducer);
