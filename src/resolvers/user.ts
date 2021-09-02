@@ -410,4 +410,10 @@ export class UserResolver {
     User.update({ id }, { ...user });
     return { errors, user };
   }
+
+  @Mutation(() => Boolean)
+  async deleteUser(@Arg("id") id: number): Promise<boolean> {
+    await User.delete(id);
+    return true;
+  }
 }
