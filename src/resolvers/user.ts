@@ -145,7 +145,9 @@ export class UserResolver {
     @Arg("options") options: LoginInput,
     @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
-    const user = await User.findOne({ where: { email: options.email } });
+    const user = await User.findOne({
+      where: { email: options.email, status: UserStatuses.ACTIVATED },
+    });
 
     if (!user) {
       return {
