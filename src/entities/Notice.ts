@@ -3,9 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
@@ -66,8 +64,7 @@ export class Notice extends BaseEntity {
   urlType!: UrlType;
 
   @Field(() => NoticeType)
-  @OneToOne(() => NoticeType)
-  @JoinColumn()
+  @ManyToOne(() => NoticeType, (noticeType) => noticeType.notices)
   noticeType: NoticeType;
 
   @Field(() => String)
