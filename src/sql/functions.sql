@@ -19,7 +19,6 @@ RETURNS TABLE
   id int,
   text character varying,
   rating numeric,
-  booking_id int,
   offer_id int
 ) AS $$
 BEGIN
@@ -28,12 +27,13 @@ BEGIN
     review.id,
     review.text,
     review.rating,
-    booking.offerId
+    booking.offer_id
   FROM review
   INNER JOIN booking 
-  WHERE
-    review.bookingId = booking.id
-END
+  ON
+    review.booking_id = booking.id;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION get_available_offers_from_city("city_id" int)
 RETURNS TABLE

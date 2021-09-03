@@ -8,6 +8,8 @@ import {
   UpdateDateColumn,
   OneToMany,
   Index,
+  getRepository,
+  getConnection
 } from "typeorm";
 import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { OfferType } from "./OfferType";
@@ -145,21 +147,24 @@ export class Offer extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  static getOrderedAndPaginatedOffersFromCoordinates(
-    coordinates: { lat: number; long: number },
+  static getOrderedAndPaginatedOffersFromCityId(
+    cityId: number = 75056,
     limit: number = 25,
     cursor: number = 0
   ) {
-    return this.createQueryBuilder("offer")
-      .where("offer.status = :status", { status: "AVAILABLE" })
-      .orderBy(
-        "ST_Distance(ST_MakePoint(:userLong, :userLat)::geography, offer.coordinates)",
-        "ASC"
-      )
-      .orderBy("")
-      .skip(cursor)
+    const result = getRepository(Offer)
+      .createQueryBuilder("offer")
+      .orderBy("distance(:cityId, offer.id)")
+      .setParameters({ cityId })
       .take(limit)
-      .setParameters({ userLong: coordinates.long, userLat: coordinates.lat })
-      .getManyAndCount();
+      .skip(cursor * limit)
+      .getMany();
+    return result;
+  }
+
+  static async getDistanceFrom(cityId: number, orderId: number): Promise<number> {
+    const test = await getConnection()
+      .query("SELECT distance($1, offer.id) FROM offer WHERE offer.id = $2", [cityId, orderId]);
+    return await test[0].distance;
   }
 }

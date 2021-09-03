@@ -6,7 +6,7 @@ import express from "express";
 import session from "express-session";
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
-import path from "path";
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies'
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -69,6 +69,7 @@ const main = async () => {
       Notice,
       NoticeType,
     ],
+    namingStrategy: new SnakeNamingStrategy()
   });
   //await connection.runMigrations();
 

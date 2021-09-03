@@ -24,8 +24,6 @@ import { DeleteReasons } from "../entities/DeleteReasons";
 class OffersResponse {
   @Field(() => [Offer])
   offers: Offer[];
-  @Field(() => Int)
-  count: number;
 }
 
 @Resolver()
@@ -33,47 +31,30 @@ export class OfferResolver {
   // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus
   @Query(() => OffersResponse)
   async offers(
-    @Arg("cityId", { nullable: true }) cityId: number,
+    @Arg("cityId") cityId: number,
     @Arg("getCities", { nullable: true }) getCities: boolean,
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
     @Arg("limit", () => Int) limit: number,
-    @Arg("cursor", () => Int, { nullable: true }) cursor: number | null
+    @Arg("cursor", () => Int) cursor: number
   ): Promise<OffersResponse> {
-    let relations = [
+    const relations = [
       "owner",
       "bookings",
       "offerType",
       "offerCriterias",
-      "bookings.review",
+      "city",
+      "city.departement",
     ];
 
-    if (
-      (typeof getCities !== "undefined" && getCities) ||
-      (typeof getDepartements !== "undefined" && getDepartements) ||
-      typeof cityId !== "undefined"
-    ) {
-      relations.push("city");
+    const offers = await Offer.getOrderedAndPaginatedOffersFromCityId(cityId, limit, cursor);
+    offers.map(async offer => {
+      offer.distance = await Offer.getDistanceFrom(cityId, offer.id)
+    });
 
-      if (typeof getDepartements !== "undefined" && getDepartements) {
-        relations.push("city.departement");
-      }
-    }
-
-    let [
-      offers,
-      offersCount,
-    ] = await Offer.getOrderedAndPaginatedOffersFromCoordinates(
-      {
-        lat: 48.85341,
-        long: 2.3488,
-      },
-      limit,
-      cursor ? cursor : 0
-    );
+    relations.map(relation => offers.map(async offer => offer[relation] = await getConnection().createQueryBuilder().relation(relation)));
 
     return {
       offers: [...offers],
-      count: offersCount,
     };
   }
 
