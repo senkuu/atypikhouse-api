@@ -85,7 +85,7 @@ export class UserResolver {
       });
     }
 
-    return User.find({ relations });
+    return User.find({ relations, order: { id: "ASC" } });
   }
 
   @Query(() => User, { nullable: true })
@@ -200,7 +200,9 @@ export class UserResolver {
     @Arg("email") email: string,
     @Ctx() { redis }: MyContext
   ): Promise<boolean> {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({
+      where: { email, status: UserStatuses.ACTIVATED },
+    });
 
     if (!user) {
       // the email is not in db
