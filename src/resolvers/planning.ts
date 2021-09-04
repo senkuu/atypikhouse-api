@@ -4,7 +4,7 @@ import { Offer } from "../entities/Offer";
 import { User } from "../entities/User";
 import { Booking, BookingStatuses } from "../entities/Booking";
 import { FindConditions, Not } from "typeorm";
-import { PlanningInput } from "./PlanningInput";
+import { PlanningInput } from "./inputs/PlanningInput";
 
 @Resolver()
 export class PlanningResolver {

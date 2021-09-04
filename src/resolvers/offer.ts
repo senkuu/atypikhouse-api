@@ -1,13 +1,20 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from "type-graphql";
 
-import { Offer, OfferStatuses } from "../entities/Offer";
+import { Offer } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
 import { CriteriaInput } from "./CriteriaInput";
 import { OfferCriteria } from "../entities/OfferCriteria";
 import { BooleanValues } from "./CriteriaInput";
-import { CoordinatesInput } from "./CoordinatesInput";
+import { CoordinatesInput } from "./inputs/CoordinatesInput";
 import { Point, Position } from "geojson";
 import { City } from "../entities/City";
 import {
@@ -15,8 +22,27 @@ import {
   calculateOfferScore,
   sortOffersByDistance,
 } from "../utils/sortOffers";
-import { DeleteReasons } from "../entities/DeleteReasons";
 import { FindConditions } from "typeorm";
+import { FieldError } from "./FieldError";
+import { CreateOfferInput, UpdateOfferInput } from "./inputs/OfferInput";
+import { validateOffer } from "../utils/validations/validateOffer";
+import { getErrorFields } from "../utils/getErrorFields";
+import { createEntity } from "../utils/createEntity";
+import { updateEntity } from "../utils/updateEntity";
+
+// key : criteria id / value : value to use
+/*export interface criteriaValue {
+  [id: number]: string;
+}*/
+
+@ObjectType()
+class OfferResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+
+  @Field(() => Offer, { nullable: true })
+  offer?: Offer;
+}
 
 @Resolver()
 export class OfferResolver {
@@ -62,7 +88,9 @@ export class OfferResolver {
     let offers = await Offer.find({ relations, where: findCondition });
 
     offers.forEach((offer) => {
-      [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
+      if (offer.coordinates !== null) {
+        [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
+      }
     });
 
     let calculateDistances = false;
@@ -102,7 +130,7 @@ export class OfferResolver {
 
   @Query(() => Offer, { nullable: true })
   async offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    return await Offer.findOne(id, {
+    let offer: Offer | undefined = await Offer.findOne(id, {
       relations: [
         "owner",
         "bookings",
@@ -112,233 +140,251 @@ export class OfferResolver {
         "city.departement",
       ],
     });
+
+    if (typeof offer !== "undefined" && offer.coordinates !== null) {
+      [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
+    }
+
+    return offer;
   }
 
-  @Mutation(() => Offer)
+  @Mutation(() => OfferResponse)
   async createOffer(
-    @Arg("title") title: string,
-    @Arg("description") description: string,
-    @Arg("coordinates", () => CoordinatesInput, { nullable: true })
-    coordinates: CoordinatesInput,
-    @Arg("address", { nullable: true }) address: string,
-    @Arg("touristTax") touristTax: number,
-    @Arg("priceHT") priceHT: number,
-    @Arg("priceTTC") priceTTC: number,
-    @Arg("cityId") cityId: number,
-    @Arg("ownerId") ownerId: number,
-    @Arg("offerTypeId") offerTypeId: number,
-    //@Arg("criteriaIds", () => [Number], { nullable: true })
-    //criteriaIds: number[],
-    @Arg("deleteReason") deleteReason: DeleteReasons,
-    @Arg("status") status: OfferStatuses
-  ): Promise<Offer | null> {
-    const owner = await User.findOne(ownerId);
-    if (!owner) {
-      console.log("SORTIE 1");
-      return null;
+    @Arg("options") options: CreateOfferInput
+  ): Promise<OfferResponse> {
+    const errors: FieldError[] = validateOffer(options);
+    let errorFields = getErrorFields(errors);
+
+    let owner: User | undefined;
+    if (typeof options.ownerId !== "undefined") {
+      owner = await User.findOne(options.ownerId);
+      if (!owner) {
+        errors.push({
+          field: "owner",
+          message: "Le propriétaire est introuvable",
+        });
+      }
     }
 
-    const offerType = await OfferType.findOne(offerTypeId);
-    if (!offerType) {
-      console.log("SORTIE 2");
-      return null;
-    }
-
-    // Faire des vérifications supplémentaires sur la validité ici ?
-    if (typeof title === "undefined" || typeof description === "undefined") {
-      console.log("SORTIE 3");
-      return null;
-    }
-
-    if (typeof priceHT === "undefined" || typeof priceTTC === "undefined") {
-      console.log("SORTIE 3b");
-      return null;
+    let offerType: OfferType | undefined;
+    if (typeof options.offerTypeId !== "undefined") {
+      offerType = await OfferType.findOne(options.offerTypeId);
+      if (!offerType) {
+        errors.push({
+          field: "offerType",
+          message: "Le type d'offre est introuvable",
+        });
+      }
     }
 
     // Préparation de la définition des coordonnées
-    // ATTENTION : Coordonnées temporairement obligatoires !
-    let formattedCoordinates: Point | null;
+    let formattedCoordinates: Point | null = null;
     // TODO : A commenter et continuer pour la définition des coordonnées, de l'adresse et de la commune
     if (
-      typeof coordinates === "undefined" ||
-      coordinates.latitude < -90 ||
-      coordinates.latitude > 90 ||
-      coordinates.longitude < -180 ||
-      coordinates.longitude > 180
+      typeof options.coordinates !== "undefined" &&
+      options.coordinates !== null
     ) {
-      return null;
-      /*let geoData = null;
-      if (typeof address !== "undefined" && typeof city !== "undefined") {
-        await fetch(
-          "https://api-adresse.data.gouv.fr/search/?q=" +
-            encodeURI(address) +
-            ",+" +
-            encodeURI(city)
-        ).then(async (result) => {
-          if (result.ok) {
-            geoData = await result.json();
-          }
-        });
+      if (!errorFields.includes("coordinates")) {
+        formattedCoordinates = {
+          type: "Point",
+          coordinates: [
+            options.coordinates.latitude,
+            options.coordinates.longitude,
+          ],
+        };
+      } else {
+        /*let geoData = null;
+        if (typeof address !== "undefined" && typeof city !== "undefined") {
+          await fetch(
+            "https://api-adresse.data.gouv.fr/search/?q=" +
+              encodeURI(address) +
+              ",+" +
+              encodeURI(city)
+          ).then(async (result) => {
+            if (result.ok) {
+              geoData = await result.json();
+            }
+          });
 
-        if (geoData === null || geoData.features.length === 0) {
-          return null;
+          if (geoData === null || geoData.features.length === 0) {
+            return null;
+          }
+
+          formattedCoordinates = geoData.features[0].geometry;
         }
 
-        formattedCoordinates = geoData.features[0].geometry;
+        formattedCoordinates = null;*/
       }
-
-      formattedCoordinates = null;*/ // TODO : vérifier si fonctionnel (erreur obtenue : Cannot return null for non-nullable field Mutation.createOffer.)
-    } else {
-      formattedCoordinates = {
-        type: "Point",
-        coordinates: [coordinates.latitude, coordinates.longitude],
-      };
     }
 
-    // TODO : A modifier lorsque l'exploitation des coordonnées sera entièrement fonctionnelle, pour relier les vérifications entre les deux
+    // TODO : A modifier lorsque l'exploitation des coordonnées sera entièrement fonctionnelle, pour lier les vérifications commune/adresse/coordonnées
     // Enregistrement de la ville (l'ID doit d'abord être récupéré via cities)
     // ATTENTION : champ ville temporairement obligatoire en attendant la gestion des coordonnées
-    const city = await City.findOne(cityId);
-    if (!city) {
-      return null;
-    }
-    /*let city: City | null;
-    if (typeof cityId !== "undefined") {
-      let foundCity = await City.findOne(cityId);
-      if (typeof foundCity === "undefined") {
-        city = null;
+    let city: City | undefined;
+    if (typeof options.cityId !== "undefined") {
+      city = await City.findOne(options.cityId);
+      if (!city) {
+        errors.push({
+          field: "city",
+          message: "La commune est introuvable",
+        });
       }
+    }
+
+    /*let criterias: Criteria[] = [];
+    if (
+      typeof options.criteriaIds !== "undefined" &&
+      options.criteriaIds.length > 0
+    ) {
+      let criteriasCheck = await generateCriteriasList(options.criteriaIds);
+      errors.push(...criteriasCheck.errors);
+      criterias = criteriasCheck.criterias;
     }*/
 
-    // TODO : Même chose que pour la ville
-    // Enregistrement simple de l'adresse
-    /*if (typeof address === "undefined") {
-      address = null;
-    }*/
+    if (errors.length > 0) {
+      return { errors };
+    }
 
-    let offerCriterias: OfferCriteria[] = [];
-    // TODO : Supprimé car la gestion de l'ajout des critères est complexe. Voir si call de la fonction d'ajout à faire ici une fois l'entité sauvegardée, ou si on appelle la création des critères en front une fois l'offre créée
-    /*if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          criterias.push(criteria);
+    let offer: Offer;
+    try {
+      offer = await createEntity(
+        options,
+        "Offer",
+        ["coordinates", "cityId", "ownerId", "offerTypeId" /*, "criterias"*/],
+        {
+          coordinates: formattedCoordinates,
+          city: city,
+          owner: owner,
+          offerType: offerType,
         }
-      });
-    }*/
+      );
 
-    if (typeof deleteReason === "undefined") {
-      deleteReason = DeleteReasons.UNKNOWN;
+      /*if (criterias.length > 0) {
+        for (const index in criterias) {
+          await OfferCriteria.create({ offer, criteria: criterias[index] });
+        }
+
+        offer = <Offer>await this.offer(offer.id);
+      }*/
+
+      return { errors, offer };
+    } catch (err) {
+      if (err.code === "23505" || err.detail.includes("already exists")) {
+        errors.push({ field: "name", message: "L'offre existe déjà" });
+      } else {
+        console.log(err.code + " " + err.detail);
+        errors.push({
+          field: "unknown",
+          message: "Erreur inconnue, veuillez contacter l'administrateur",
+        });
+      }
+
+      return { errors };
     }
-
-    if (typeof status === "undefined") {
-      status = OfferStatuses.WAITING_APPROVAL;
-    }
-
-    console.log("MAIN SORTIE");
-    return Offer.create({
-      title,
-      description,
-      touristTax: touristTax ?? 0,
-      priceHT,
-      priceTTC,
-      coordinates: formattedCoordinates,
-      city,
-      address,
-      owner,
-      offerType,
-      offerCriterias,
-      status,
-      deleteReason,
-    }).save();
   }
 
-  @Mutation(() => Offer, { nullable: true })
+  @Mutation(() => OfferResponse)
   async updateOffer(
     @Arg("id") id: number,
-    @Arg("title", () => String, { nullable: true }) title: string,
-    @Arg("description", () => String, { nullable: true }) description: string,
-    @Arg("coordinates", () => CoordinatesInput, { nullable: true })
-    coordinates: CoordinatesInput,
-    @Arg("address", { nullable: true }) address: string,
-    @Arg("touristTax", { nullable: true }) touristTax: number,
-    @Arg("priceHT", { nullable: true }) priceHT: number,
-    @Arg("priceTTC", { nullable: true }) priceTTC: number,
-    @Arg("ownerId", () => Number, { nullable: true }) ownerId: number,
-    @Arg("offerTypeId", () => Number, { nullable: true }) offerTypeId: number,
-    //@Arg("criteriaIds", () => [Number], { nullable: true })
-    //criteriaIds: number[],
-    @Arg("status", { nullable: true }) status: OfferStatuses,
-    @Arg("deleteReason", { nullable: true }) deleteReason: DeleteReasons
-  ): Promise<Offer | null> {
-    const offer = await Offer.findOne(id);
+    @Arg("options") options: UpdateOfferInput
+  ): Promise<OfferResponse> {
+    let offer = await Offer.findOne(id);
     if (!offer) {
-      return null;
-    }
-    if (typeof title !== "undefined") {
-      offer.title = title;
-    }
-    if (typeof description !== "undefined") {
-      offer.description = description;
-    }
-    if (
-      typeof coordinates !== "undefined" &&
-      coordinates.latitude >= -90 &&
-      coordinates.latitude <= 90 &&
-      coordinates.longitude >= -180 &&
-      coordinates.longitude <= 180
-    ) {
-      offer.coordinates = {
-        type: "Point",
-        coordinates: [coordinates.latitude, coordinates.longitude],
+      return {
+        errors: [{ field: "id", message: "L'offre est introuvable" }],
       };
     }
-    if (typeof address !== "undefined") {
-      offer.address = address;
-    }
-    if (typeof touristTax !== "undefined") {
-      offer.touristTax = touristTax;
-    }
-    if (typeof priceHT !== "undefined") {
-      offer.priceHT = priceHT;
-    }
-    if (typeof priceTTC !== "undefined") {
-      offer.priceTTC = priceTTC;
-    }
-    if (typeof ownerId !== "undefined") {
-      const owner = await User.findOne(ownerId);
-      if (owner) {
-        offer.owner = owner;
+
+    const errors: FieldError[] = validateOffer(options);
+
+    let owner: User | undefined = offer.owner;
+    if (typeof options.ownerId !== "undefined") {
+      owner = await User.findOne(options.ownerId);
+      if (!owner) {
+        errors.push({
+          field: "owner",
+          message: "Le propriétaire est introuvable",
+        });
       }
     }
-    if (typeof offerTypeId !== "undefined") {
-      const offerType = await OfferType.findOne(offerTypeId);
-      if (offerType) {
-        offer.offerType = offerType;
+
+    let offerType: OfferType | undefined = offer.offerType;
+    if (typeof options.offerTypeId !== "undefined") {
+      offerType = await OfferType.findOne(options.offerTypeId);
+      if (!offerType) {
+        errors.push({
+          field: "offerType",
+          message: "Le type d'offre est introuvable",
+        });
       }
     }
+
+    // TODO: Voir todo sur les coordonnées dans createOffer
+    let formattedCoordinates: Point | null = offer.coordinates;
+    if (
+      typeof options.coordinates !== "undefined" &&
+      !getErrorFields(errors).includes("coordinates")
+    ) {
+      if (options.coordinates === null) {
+        formattedCoordinates = null;
+      } else {
+        formattedCoordinates = {
+          type: "Point",
+          coordinates: [
+            options.coordinates.latitude,
+            options.coordinates.longitude,
+          ],
+        };
+      }
+    }
+
+    // TODO : Voir todo sur city dans createOffer
+    let city: City | undefined = offer.city;
+    if (typeof options.cityId !== "undefined") {
+      city = await City.findOne(options.cityId);
+      if (!city) {
+        errors.push({
+          field: "city",
+          message: "La commune est introuvable",
+        });
+      }
+    }
+
     // TODO : Supprimé car la gestion de l'ajout des critères est complexe. Voir si call de la fonction d'ajout à faire ici, ou si on appelle la création des critères en front une fois l'offre créée
-    /*if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      let criterias: Criteria[] = [];
+    /*if (
+      typeof options.criteriaIds !== "undefined" &&
+      options.criteriaIds.length > 0
+    ) {
+      let criteriasCheck = await generateCriteriasList(options.criteriaIds);
+      errors.push(...criteriasCheck.errors);
 
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          criterias.push(criteria);
+      if (criteriasCheck.criterias.length > 0) {
+        for (const index in criteriasCheck.criterias) {
+          await OfferCriteria.create({
+            offer,
+            criteria: criteriasCheck.criterias[index],
+          });
         }
-      });
 
-      offer.criterias = criterias;
+        offer = <Offer>await this.offer(offer.id);
+      }
     }*/
-    if (typeof status !== "undefined") {
-      offer.status = status;
-    }
-    if (typeof deleteReason !== "undefined") {
-      offer.deleteReason = deleteReason;
-    }
 
-    Offer.update({ id }, { ...offer });
-    return offer;
+    offer = await updateEntity(
+      offer,
+      options,
+      errors,
+      ["coordinates", "cityId", "ownerId", "offerTypeId" /*, "criterias"*/],
+      {
+        coordinates: formattedCoordinates,
+        city: city,
+        owner: owner,
+        offerType: offerType,
+      }
+    );
+
+    offer = await Offer.save(offer);
+    return { errors, offer };
   }
 
   @Mutation(() => Offer, { nullable: true })

@@ -1,10 +1,34 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import {
+  Arg,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from "type-graphql";
 
-import { Booking, BookingStatuses, CancelReasons } from "../entities/Booking";
+import { Booking, BookingStatuses } from "../entities/Booking";
 import { Offer } from "../entities/Offer";
 import { User } from "../entities/User";
 import { FindConditions, Not } from "typeorm";
-import { Planning } from "../entities/Planning";
+import { CreateBookingInput, UpdateBookingInput } from "./inputs/BookingInput";
+import { FieldError } from "./FieldError";
+import { getErrorFields } from "../utils/getErrorFields";
+import {
+  checkBookingDates,
+  validateBooking,
+} from "../utils/validations/validateBooking";
+import { createEntity } from "../utils/createEntity";
+import { updateEntity } from "../utils/updateEntity";
+
+@ObjectType()
+class BookingResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+
+  @Field(() => Booking, { nullable: true })
+  booking?: Booking;
+}
 
 @Resolver()
 export class BookingResolver {
@@ -39,192 +63,119 @@ export class BookingResolver {
   }
 
   // TODO: Ignorer la vérification de dates sur des résas annulées
-  @Mutation(() => Booking)
+  @Mutation(() => BookingResponse)
   async createBooking(
-    @Arg("offerId") offerId: number,
-    @Arg("occupantId") occupantId: number,
-    @Arg("adults") adults: number,
-    @Arg("children") children: number,
-    @Arg("priceHT") priceHT: number,
-    @Arg("priceTTC") priceTTC: number,
-    @Arg("startDate")
-    startDate: Date,
-    @Arg("endDate") endDate: Date,
-    @Arg("status") status: BookingStatuses,
-    @Arg("cancelReason") cancelReason: CancelReasons
-  ): Promise<Booking | null> {
-    const offer = await Offer.findOne(offerId);
-    if (!offer) {
-      return null;
+    @Arg("options") options: CreateBookingInput
+  ): Promise<BookingResponse> {
+    const errors: FieldError[] = validateBooking(options);
+    let errorFields = getErrorFields(errors);
+
+    let offer: Offer | undefined;
+    if (typeof options.offerId !== "undefined") {
+      offer = await Offer.findOne(options.offerId);
+      if (!offer) {
+        errors.push({
+          field: "offer",
+          message: "L'offre est introuvable",
+        });
+      }
     }
 
-    const occupant = await User.findOne(occupantId);
-    if (!occupant) {
-      return null;
-    }
-
-    // Vérifier si utile, et le cas échéant si fonctionnel
-    if (typeof startDate === "undefined" || typeof endDate === "undefined") {
-      return null;
-    }
-
-    if (typeof adults === "undefined" || typeof children === "undefined") {
-      return null;
-    }
-
-    if (typeof priceHT === "undefined" || typeof priceTTC === "undefined") {
-      return null;
-    }
-
-    // TODO: Erreur explicite à indiquer
-    if (endDate < startDate) {
-      return null;
-    }
-
-    let existingBookings = await this.bookings(offerId, true);
-
-    if (
-      existingBookings !== null &&
-      existingBookings.some(
-        (booking) => booking.endDate > startDate && booking.startDate < endDate
-      )
-    ) {
-      return null;
-    }
-
-    let planningData: Planning[] = [];
-
-    let offerPlanningData = await Planning.find({ where: { offer: offer } });
-    if (offerPlanningData !== null) {
-      planningData.push(...offerPlanningData);
-    }
-
-    let ownerPlanningData = await Planning.find({
-      where: { owner: offer.owner },
-    });
-    if (ownerPlanningData !== null) {
-      planningData.push(...ownerPlanningData);
+    let occupant: User | undefined;
+    if (typeof options.occupantId !== "undefined") {
+      occupant = await User.findOne(options.occupantId);
+      if (!occupant) {
+        errors.push({
+          field: "occupant",
+          message: "Le compte voyageur est introuvable",
+        });
+      }
     }
 
     if (
-      planningData !== null &&
-      planningData.some(
-        (data) => data.endDate > startDate && data.startDate < endDate
-      )
+      !errorFields.includes("startDate") &&
+      !errorFields.includes("endDate") &&
+      offer
     ) {
-      return null;
+      const existingBookings = await this.bookings(options.offerId, true);
+      const checkDatesErrors = await checkBookingDates(
+        offer,
+        options.startDate,
+        options.endDate,
+        existingBookings
+      );
+      errors.push(...checkDatesErrors);
     }
 
-    if (typeof status === "string") {
-      if (!Object.values(BookingStatuses).includes(status)) {
-        status = BookingStatuses.WAITING_APPROVAL;
-      }
-    } else {
-      status = BookingStatuses.WAITING_APPROVAL;
+    if (errors.length > 0) {
+      return { errors };
     }
 
-    if (typeof cancelReason === "string") {
-      if (!Object.values(CancelReasons).includes(cancelReason)) {
-        cancelReason = CancelReasons.UNKNOWN;
-      }
-    } else {
-      cancelReason = CancelReasons.UNKNOWN;
-    }
+    let booking: Booking;
+    try {
+      booking = await createEntity(
+        options,
+        "Booking",
+        ["offerId", "occupantId"],
+        {
+          offer: offer,
+          occupant: occupant,
+        }
+      );
 
-    return Booking.create({
-      offer,
-      occupant,
-      adults,
-      children,
-      priceHT,
-      priceTTC,
-      startDate,
-      endDate,
-      status,
-      cancelReason,
-    }).save();
+      return { errors, booking };
+    } catch (err) {
+      console.log(err.code + " " + err.detail);
+      errors.push({
+        field: "unknown",
+        message: "Erreur inconnue, veuillez contacter l'administrateur",
+      });
+
+      return { errors };
+    }
   }
 
   // TODO : Faire la vérification de dates comme sur createBooking
-  @Mutation(() => Booking, { nullable: true })
+  @Mutation(() => BookingResponse, { nullable: true })
   async updateBooking(
     @Arg("id") id: number,
-    @Arg("startDate", () => Date, { nullable: true }) startDate: Date,
-    @Arg("endDate", () => Date, { nullable: true }) endDate: Date,
-    @Arg("status", { nullable: true }) status: BookingStatuses,
-    @Arg("cancelReason", { nullable: true }) cancelReason: CancelReasons
-  ): Promise<Booking | null> {
-    const booking = await Booking.findOne(id);
+    @Arg("options") options: UpdateBookingInput
+  ): Promise<BookingResponse> {
+    let booking = await this.booking(id);
     if (!booking) {
-      return null;
+      return {
+        errors: [{ field: "id", message: "La réservation est introuvable" }],
+      };
     }
 
-    let startDateSave = booking.startDate;
-    let endDateSave = booking.endDate;
+    const errors: FieldError[] = validateBooking(options, booking);
+    let errorFields = getErrorFields(errors);
 
-    if (typeof startDate !== "undefined") {
-      booking.startDate = startDate;
-    }
-    if (typeof endDate !== "undefined") {
-      booking.endDate = endDate;
-    }
-
-    if (endDate < startDate) {
-      booking.startDate = startDateSave;
-      booking.endDate = endDateSave;
-    }
-
-    let existingBookings = await this.bookings(booking.offer.id, true);
-
-    if (
-      existingBookings !== null &&
-      existingBookings.some(
-        (booking) => booking.endDate > startDate && booking.startDate < endDate
-      )
-    ) {
-      booking.startDate = startDateSave;
-      booking.endDate = endDateSave;
-    }
-
-    let planningData: Planning[] = [];
-
-    let offerPlanningData = await Planning.find({
-      where: { offer: booking.offer },
-    });
-    if (offerPlanningData !== null) {
-      planningData.push(...offerPlanningData);
-    }
-
-    let ownerPlanningData = await Planning.find({
-      where: { owner: booking.offer.owner },
-    });
-    if (ownerPlanningData !== null) {
-      planningData.push(...ownerPlanningData);
-    }
-
-    if (
-      planningData !== null &&
-      planningData.some(
-        (data) => data.endDate > startDate && data.startDate < endDate
-      )
-    ) {
-      booking.startDate = startDateSave;
-      booking.endDate = endDateSave;
-    }
-
-    if (typeof status === "string") {
-      if (Object.values(BookingStatuses).includes(status)) {
-        booking.status = status;
+    if (errorFields.includes("startDate") || errorFields.includes("endDate")) {
+      options.startDate = booking.startDate;
+      options.endDate = booking.endDate;
+    } else {
+      if (typeof options.startDate === "undefined") {
+        options.startDate = booking.startDate;
       }
-    }
-    if (typeof cancelReason === "string") {
-      if (Object.values(CancelReasons).includes(cancelReason)) {
-        booking.cancelReason = cancelReason;
+      if (typeof options.endDate === "undefined") {
+        options.endDate = booking.endDate;
       }
+
+      const existingBookings = await this.bookings(booking.offer.id, true);
+      const checkDatesErrors = await checkBookingDates(
+        booking.offer,
+        options.startDate,
+        options.endDate,
+        existingBookings
+      );
+      errors.push(...checkDatesErrors);
     }
 
-    Booking.update({ id }, { ...booking });
-    return booking;
+    booking = await updateEntity(booking, options, errors);
+    booking = await Booking.save(booking);
+
+    return { errors, booking };
   }
 
   @Mutation(() => Boolean)

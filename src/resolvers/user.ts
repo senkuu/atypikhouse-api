@@ -21,7 +21,7 @@ import { validateRegister } from "../utils/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 
 // import type
-import { RegisterInput } from "./RegisterInput";
+import { RegisterInput } from "./inputs/RegisterInput";
 import { FieldError } from "./FieldError";
 import { isValidEmail } from "../utils/isValidEmail";
 import { isValidUrl } from "../utils/isValidUrl";
@@ -46,6 +46,7 @@ enum UserQueryRelations {
   NOTICES = "notices",
   LINKED_NOTICES = "linkedNotices",
   PHOTO = "photo",
+  PLANNING_DATA = "planningData",
 }
 
 @ObjectType()

@@ -60,6 +60,7 @@ export class Offer extends BaseEntity {
     type: "geography",
     spatialFeatureType: "Point",
     srid: 4326,
+    nullable: true,
   })
   coordinates: Point;
 

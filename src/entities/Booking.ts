@@ -72,6 +72,10 @@ export class Booking extends BaseEntity {
   priceTTC!: number;
 
   @Field()
+  @Column({ type: "decimal" })
+  touristTax!: number;
+
+  @Field()
   @Column({ type: "timestamp" })
   startDate!: Date;
 
