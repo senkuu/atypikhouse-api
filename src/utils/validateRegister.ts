@@ -69,7 +69,7 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
       message:
         "Le mot de passe doit comporter au moins 1 chiffre et 1 majuscule",
     });
-  }
+  }*/
 
   return errors;
 };
