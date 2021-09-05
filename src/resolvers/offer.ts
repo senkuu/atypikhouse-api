@@ -17,6 +17,14 @@ import {
 } from "../utils/sortOffers";
 import { DeleteReasons } from "../entities/DeleteReasons";
 import { FindConditions } from "typeorm";
+import { ReadStream } from "fs";
+
+export type File = {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  stream?: ReadStream;
+}
 
 @Resolver()
 export class OfferResolver {
@@ -37,6 +45,7 @@ export class OfferResolver {
       "offerType",
       "offerCriterias",
       "bookings.review",
+      "photos"
     ];
 
     if (
@@ -132,7 +141,7 @@ export class OfferResolver {
     //@Arg("criteriaIds", () => [Number], { nullable: true })
     //criteriaIds: number[],
     @Arg("deleteReason") deleteReason: DeleteReasons,
-    @Arg("status") status: OfferStatuses
+    @Arg("status") status: OfferStatuses,
   ): Promise<Offer | null> {
     const owner = await User.findOne(ownerId);
     if (!owner) {
@@ -237,7 +246,6 @@ export class OfferResolver {
       status = OfferStatuses.WAITING_APPROVAL;
     }
 
-    console.log("MAIN SORTIE");
     return Offer.create({
       title,
       description,
@@ -413,7 +421,7 @@ export class OfferResolver {
   }
 
   @Mutation(() => Offer, { nullable: true })
-  async removeOfferCriterias(
+  offer resolv  async removeOfferCriterias(
     @Arg("offerId") id: number,
     @Arg("criteriaIds", () => [Number], { nullable: true })
     criteriaIds: number[]

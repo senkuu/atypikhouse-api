@@ -2,11 +2,14 @@ import "reflect-metadata";
 
 require("dotenv").config();
 
+import fs from 'fs'
+import path from 'path'
+
 import express from "express";
 import session from "express-session";
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
-import path from "path";
+import multer from 'multer';
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -79,6 +82,7 @@ const main = async () => {
     parseInt(process.env.REDIS_PORT!),
     process.env.REDIS_HOST
   );
+  const upload = multer({ dest: 'uploads/' });
 
   app.use(
     cors({
@@ -105,6 +109,50 @@ const main = async () => {
       resave: false,
     })
   );
+
+  app.get('/images/:imageId', async (req, res) => {
+    const imageId = Number(req.params.imageId);
+
+    if (isNaN(imageId)) {
+      return res.status(500).send({ error: `invalid id type` })
+    }
+
+    const image = await Photo.findOne(imageId);
+
+    if (!image) {
+      return res.sendStatus(404);
+    }
+
+    res.setHeader('Content-Type', image.mimetype);
+    fs.createReadStream(path.join(image.url)).pipe(res)
+  })
+
+  app.post('/offer/:offerId/images', upload.single('image'), async (req, res) => {
+    const offerId = Number(req.params.offerId);
+
+    if (!req.file) {
+      return res.status(500).send({ error: "Please add an image" })
+    }
+
+    if (isNaN(offerId)) {
+      return res.status(500).send({ error: `invalid id type` })
+    }
+
+    const offer = await Offer.findOne(offerId)
+
+    if (!offer) {
+      return res.status(500).send({ error: `The offer with id ${offerId} doesn't exist` })
+    }
+
+    Photo.create({
+      filename: req.file.filename,
+      url: req.file.path,
+      mimetype: req.file.mimetype,
+      offer
+    }).save();
+
+    return res.status(200).send({ message: `file uploaded` })
+  })
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({

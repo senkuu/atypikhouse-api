@@ -9,6 +9,7 @@ import {
   OneToMany,
   Index,
 } from "typeorm";
+
 import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { OfferType } from "./OfferType";
 import { User } from "./User";
@@ -28,6 +29,13 @@ export enum OfferStatuses {
   AVAILABLE = "AVAILABLE",
   DISABLED = "DISABLED",
   DELETED = "DELETED",
+}
+
+export interface UploadedFileResponse {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  url: string;
 }
 
 registerEnumType(DeleteReasons, {
