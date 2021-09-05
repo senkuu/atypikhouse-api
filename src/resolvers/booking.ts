@@ -6,9 +6,54 @@ import { User } from "../entities/User";
 
 @Resolver()
 export class BookingResolver {
-  @Query(() => [Booking])
-  bookings(): Promise<Booking[]> {
-    return Booking.find({ relations: ["offer", "occupant"] });
+  @Query(() => [Booking], { nullable: true })
+  async bookings(
+    @Arg("offerId", { nullable: true }) offerId?: number,
+    @Arg("occupantId", { nullable: true }) occupantId?: number,
+    @Arg("ownerId", { nullable: true }) ownerId?: number,
+    @Arg("hideCancelled", { nullable: true }) hideCancelled?: boolean
+  ): Promise<Booking[] | null> {
+    let bookings = await Booking.createQueryBuilder("booking")
+      .innerJoinAndSelect("booking.offer", "offer")
+      .innerJoinAndSelect("booking.occupant", "occupant")
+      .innerJoinAndSelect("offer.owner", "owner");
+
+    if (hideCancelled) {
+      bookings = bookings.where("booking.status != :status", {
+        status: BookingStatuses.CANCELLED,
+      });
+    }
+
+    if (typeof offerId !== "undefined") {
+      const offer = await Offer.findOne(offerId);
+      if (!offer) {
+        return [];
+      }
+
+      bookings = bookings.andWhere("offer.id = :offer", { offer: offer.id });
+    }
+
+    if (typeof occupantId !== "undefined") {
+      const occupant = await User.findOne(occupantId);
+      if (!occupant) {
+        return [];
+      }
+
+      bookings = bookings.andWhere("occupant.id = :occupant", {
+        occupant: occupant.id,
+      });
+    }
+
+    if (typeof ownerId !== "undefined") {
+      const owner = await User.findOne(ownerId);
+      if (!owner) {
+        return [];
+      }
+
+      bookings = bookings.andWhere("owner.id = :owner", { owner: owner.id });
+    }
+
+    return bookings.getMany();
   }
 
   @Query(() => Booking, { nullable: true })
