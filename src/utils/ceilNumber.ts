@@ -1,5 +1,5 @@
 export const ceilNumber = (number: number, decimals: number): number | null => {
-  if (!Number.isInteger(decimals) || decimals > 5) {
+  if (!Number.isInteger(decimals) || decimals > 5 || decimals < 0) {
     return null;
   }
 
