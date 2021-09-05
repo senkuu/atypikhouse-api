@@ -1,4 +1,4 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Mutation, Query, Resolver, Field, ObjectType } from "type-graphql";
 
 import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
@@ -26,12 +26,18 @@ export type File = {
   stream?: ReadStream;
 }
 
+@ObjectType()
+class OfferResponse {
+  @Field(() => [Offer])
+  offers: Offer[];
+}
+
 @Resolver()
 export class OfferResolver {
   // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus.
   // / cityId : tri par proximité en fonction du code ville INSEE renseigné
   // / ownerId : filtre les offres appartenant à un propriétaire
-  @Query(() => [Offer])
+  @Query(() => OfferResponse)
   async offers(
     @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
     @Arg("cityId", { nullable: true }) cityId: number,
@@ -39,7 +45,7 @@ export class OfferResolver {
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
     @Arg("ownerId", { nullable: true }) ownerId: number,
     @Arg("status", { nullable: true }) status: OfferStatuses
-  ): Promise<Offer[]> {
+  ): Promise<{ offers: Offer[] }> {
     let relations = [
       "owner",
       "bookings",
@@ -115,7 +121,7 @@ export class OfferResolver {
       calculateOfferScore(offers, false);
     }
 
-    return offers;
+    return { offers: offers };
   }
 
   @Query(() => Offer, { nullable: true })
@@ -128,6 +134,7 @@ export class OfferResolver {
         "offerCriterias",
         "city",
         "city.departement",
+        "photos"
       ],
     });
   }

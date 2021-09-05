@@ -127,10 +127,10 @@ const main = async () => {
     fs.createReadStream(path.join(image.url)).pipe(res)
   })
 
-  app.post('/offer/:offerId/images', upload.single('image'), async (req, res) => {
+  app.post('/offer/:offerId/images', upload.array('image', 6), async (req, res) => {
     const offerId = Number(req.params.offerId);
 
-    if (!req.file) {
+    if (!req.files) {
       return res.status(500).send({ error: "Please add an image" })
     }
 
@@ -144,12 +144,16 @@ const main = async () => {
       return res.status(500).send({ error: `The offer with id ${offerId} doesn't exist` })
     }
 
-    Photo.create({
-      filename: req.file.filename,
-      url: req.file.path,
-      mimetype: req.file.mimetype,
-      offer
-    }).save();
+    //@ts-ignore
+    req.files!.forEach((file) => {
+      Photo.create({
+        filename: file.filename,
+        url: file.path,
+        mimetype: file.mimetype,
+        offer
+      }).save();
+    })
+
 
     return res.status(200).send({ message: `file uploaded` })
   })
