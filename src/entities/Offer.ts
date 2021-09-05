@@ -91,9 +91,10 @@ export class Offer extends BaseEntity {
   @Field({ nullable: true })
   averageRating: number;
 
-  @Field()
-  @ManyToOne(() => City, (city) => city.offers)
-  city!: City;
+  // Temporarily nullable
+  @Field({ nullable: true })
+  @ManyToOne(() => City, (city) => city.offers, { nullable: true })
+  city: City;
 
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.offers)
