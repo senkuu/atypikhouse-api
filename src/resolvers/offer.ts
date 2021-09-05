@@ -36,6 +36,12 @@ import { updateEntity } from "../utils/updateEntity";
 }*/
 
 @ObjectType()
+class SearchOfferResponse {
+  @Field(() => [Offer])
+  offers: Offer[];
+}
+
+@ObjectType()
 class OfferResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
@@ -49,7 +55,7 @@ export class OfferResolver {
   // Récupération des offres : le tri est réalisé géographiquement. Si des coordonnées valides sont indiquées en argument, celles-ci sont prioritaires sur l'argument cityId. getCities permet de récupérer les communes dans la requête GraphQL en y précisant ensuite les champs voulus.
   // / cityId : tri par proximité en fonction du code ville INSEE renseigné
   // / ownerId : filtre les offres appartenant à un propriétaire
-  @Query(() => [Offer])
+  @Query(() => SearchOfferResponse)
   async offers(
     @Arg("coordinates", { nullable: true }) coordinates: CoordinatesInput,
     @Arg("cityId", { nullable: true }) cityId: number,
@@ -57,7 +63,7 @@ export class OfferResolver {
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
     @Arg("ownerId", { nullable: true }) ownerId: number,
     @Arg("status", { nullable: true }) status: OfferStatuses
-  ): Promise<Offer[]> {
+  ): Promise<{ offers: Offer[] }> {
     let relations = [
       "owner",
       "bookings",
@@ -132,7 +138,7 @@ export class OfferResolver {
       calculateOfferScore(offers, false);
     }
 
-    return offers;
+    return { offers: offers };
   }
 
   @Query(() => Offer, { nullable: true })
