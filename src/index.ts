@@ -41,6 +41,7 @@ import { PhotoType } from "./entities/PhotoType";
 import { Planning } from "./entities/Planning";
 import { NoticeType } from "./entities/NoticeType";
 import { Notice } from "./entities/Notice";
+import { PlanningResolver } from "./resolvers/planning";
 
 const main = async () => {
   const connection = await createConnection({
@@ -118,6 +119,7 @@ const main = async () => {
         CityResolver,
         RegionResolver,
         DepartementResolver,
+        PlanningResolver,
       ],
       validate: false,
     }),

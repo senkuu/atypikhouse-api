@@ -1,7 +1,7 @@
-import { isValidEmail } from "./isValidEmail";
-import { RegisterInput } from "../resolvers/inputs/RegisterInput";
-import { FieldError } from "../resolvers/FieldError";
-import { UserStatuses, UserTypes } from "../entities/User";
+import { isValidEmail } from "../isValidEmail";
+import { RegisterInput } from "../../resolvers/inputs/RegisterInput";
+import { FieldError } from "../../resolvers/FieldError";
+import { UserStatuses, UserTypes } from "../../entities/User";
 
 export const validateRegister = (options: RegisterInput): FieldError[] => {
   const errors: FieldError[] = [];

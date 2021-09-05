@@ -9,8 +9,7 @@ import {
   BookingStatuses,
   CancelReasons,
 } from "../../entities/Booking";
-import { Offer } from "../../entities/Offer";
-import { Planning } from "../../entities/Planning";
+import { validateCreateDates, validateDates } from "./validateDates";
 
 export const validateBooking = (
   options: CreateBookingInput | UpdateBookingInput,
@@ -61,19 +60,7 @@ export const validateBooking = (
       });
     }
 
-    if (typeof options.startDate === "undefined") {
-      errors.push({
-        field: "startDate",
-        message: "La date de début n'est pas défiinie",
-      });
-    }
-
-    if (typeof options.endDate === "undefined") {
-      errors.push({
-        field: "endDate",
-        message: "La date de fin n'est pas définie",
-      });
-    }
+    errors.push(...validateCreateDates(options));
 
     if (typeof options.status === "undefined") {
       errors.push({
@@ -82,9 +69,6 @@ export const validateBooking = (
       });
     }
   }
-
-  // Faire la récup owner, offerType et city dans createOffer après la vérif
-  // Traiter description et titre
 
   const adultsLimit = 16;
   if (typeof options.adults !== "undefined") {
@@ -158,68 +142,7 @@ export const validateBooking = (
     }
   }
 
-  if (typeof options.startDate !== "undefined") {
-    if (isNaN(options.startDate.getTime())) {
-      errors.push({
-        field: "startDate",
-        message: "La date de début est incorrecte",
-      });
-      options.startDate = undefined;
-    }
-  }
-  if (typeof options.endDate !== "undefined") {
-    if (isNaN(options.endDate.getTime())) {
-      errors.push({
-        field: "endDate",
-        message: "La date de fin est incorrecte",
-      });
-      options.endDate = undefined;
-    }
-  }
-
-  if (
-    typeof options.startDate !== "undefined" &&
-    typeof options.endDate !== "undefined"
-  ) {
-    if (options.endDate <= options.startDate) {
-      errors.push({
-        field: "startDate",
-        message: "La date de début doit se situer avant la date de fin",
-      });
-      errors.push({
-        field: "endDate",
-        message: "La date de fin doit se situer après la date de début",
-      });
-    }
-  } else if (options instanceof UpdateBookingInput) {
-    if (typeof options.startDate !== "undefined") {
-      if (typeof entity === "undefined") {
-        errors.push({
-          field: "startDate",
-          message:
-            "Impossible de vérifier la validité de la date de début : veuillez contacter un administrateur",
-        });
-      } else if (entity.endDate <= options.startDate) {
-        errors.push({
-          field: "startDate",
-          message: "La date de début doit se situer avant la date de fin",
-        });
-      }
-    } else if (typeof options.endDate !== "undefined") {
-      if (typeof entity === "undefined") {
-        errors.push({
-          field: "endDate",
-          message:
-            "Impossible de vérifier la validité de la date de fin : veuillez contacter un administrateur",
-        });
-      } else if (options.endDate <= entity.startDate) {
-        errors.push({
-          field: "endDate",
-          message: "La date de fin doit se situer après la date de début",
-        });
-      }
-    }
-  }
+  errors.push(...validateDates(options, entity));
 
   // TODO : Vérifier la touristTax dans booking.ts avec les informations de l'offre, pour vérifier si le calcul taxe offre*nb personnes = taxe résa
   if (typeof options.touristTax !== "undefined") {
@@ -248,63 +171,6 @@ export const validateBooking = (
         message: "Le statut est incorrect",
       });
     }
-  }
-
-  return errors;
-};
-
-export const checkBookingDates = async (
-  offer: Offer,
-  startDate: Date,
-  endDate: Date,
-  existingBookings: Booking[] | null
-): Promise<FieldError[]> => {
-  const errors: FieldError[] = [];
-  let notAvailable = false;
-
-  if (
-    existingBookings !== null &&
-    existingBookings.some(
-      (booking) => booking.endDate > startDate && booking.startDate < endDate
-    )
-  ) {
-    notAvailable = true;
-  }
-
-  let planningData: Planning[] = [];
-
-  let offerPlanningData = await Planning.find({
-    where: { offer },
-  });
-  if (offerPlanningData !== null) {
-    planningData.push(...offerPlanningData);
-  }
-
-  let ownerPlanningData = await Planning.find({
-    where: { owner: offer.owner },
-  });
-  if (ownerPlanningData !== null) {
-    planningData.push(...ownerPlanningData);
-  }
-
-  if (
-    planningData !== null &&
-    planningData.some(
-      (data) => data.endDate > startDate && data.startDate < endDate
-    )
-  ) {
-    notAvailable = true;
-  }
-
-  if (notAvailable) {
-    errors.push({
-      field: "startDate",
-      message: "L'offre n'est pas disponible aux dates sélectionnées",
-    });
-    errors.push({
-      field: "endDate",
-      message: "L'offre n'est pas disponible aux dates sélectionnées",
-    });
   }
 
   return errors;

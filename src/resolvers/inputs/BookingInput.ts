@@ -1,8 +1,9 @@
 import { Field, InputType } from "type-graphql";
 import { BookingStatuses, CancelReasons } from "../../entities/Booking";
+import { CreateDatesInput, UpdateDatesInput } from "./DatesInput";
 
 @InputType()
-export class CreateBookingInput {
+export class CreateBookingInput extends CreateDatesInput {
   @Field()
   offerId: number;
   @Field()
@@ -28,7 +29,7 @@ export class CreateBookingInput {
 }
 
 @InputType()
-export class UpdateBookingInput {
+export class UpdateBookingInput extends UpdateDatesInput {
   @Field({ nullable: true })
   adults?: number;
   @Field({ nullable: true })

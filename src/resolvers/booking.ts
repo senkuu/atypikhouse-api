@@ -14,12 +14,10 @@ import { FindConditions, Not } from "typeorm";
 import { CreateBookingInput, UpdateBookingInput } from "./inputs/BookingInput";
 import { FieldError } from "./FieldError";
 import { getErrorFields } from "../utils/getErrorFields";
-import {
-  checkBookingDates,
-  validateBooking,
-} from "../utils/validations/validateBooking";
+import { validateBooking } from "../utils/validations/validateBooking";
 import { createEntity } from "../utils/createEntity";
 import { updateEntity } from "../utils/updateEntity";
+import { checkDatesAvailability } from "../utils/checkDatesAvailability";
 
 @ObjectType()
 class BookingResponse {
@@ -59,10 +57,11 @@ export class BookingResolver {
 
   @Query(() => Booking, { nullable: true })
   booking(@Arg("id") id: number): Promise<Booking | undefined> {
-    return Booking.findOne(id, { relations: ["offer", "occupant"] });
+    return Booking.findOne(id, {
+      relations: ["offer", "occupant", "offer.owner"],
+    });
   }
 
-  // TODO: Ignorer la vérification de dates sur des résas annulées
   @Mutation(() => BookingResponse)
   async createBooking(
     @Arg("options") options: CreateBookingInput
@@ -72,7 +71,7 @@ export class BookingResolver {
 
     let offer: Offer | undefined;
     if (typeof options.offerId !== "undefined") {
-      offer = await Offer.findOne(options.offerId);
+      offer = await Offer.findOne(options.offerId, { relations: ["owner"] });
       if (!offer) {
         errors.push({
           field: "offer",
@@ -97,12 +96,11 @@ export class BookingResolver {
       !errorFields.includes("endDate") &&
       offer
     ) {
-      const existingBookings = await this.bookings(options.offerId, true);
-      const checkDatesErrors = await checkBookingDates(
-        offer,
+      const checkDatesErrors = await checkDatesAvailability(
+        null,
         options.startDate,
         options.endDate,
-        existingBookings
+        offer
       );
       errors.push(...checkDatesErrors);
     }
@@ -135,7 +133,6 @@ export class BookingResolver {
     }
   }
 
-  // TODO : Faire la vérification de dates comme sur createBooking
   @Mutation(() => BookingResponse, { nullable: true })
   async updateBooking(
     @Arg("id") id: number,
@@ -145,6 +142,18 @@ export class BookingResolver {
     if (!booking) {
       return {
         errors: [{ field: "id", message: "La réservation est introuvable" }],
+      };
+    }
+
+    if (booking.status === BookingStatuses.CANCELLED) {
+      return {
+        errors: [
+          {
+            field: "id",
+            message:
+              "Impossible de modifier les informations d'une réservation annulée",
+          },
+        ],
       };
     }
 
@@ -162,12 +171,11 @@ export class BookingResolver {
         options.endDate = booking.endDate;
       }
 
-      const existingBookings = await this.bookings(booking.offer.id, true);
-      const checkDatesErrors = await checkBookingDates(
-        booking.offer,
+      const checkDatesErrors = await checkDatesAvailability(
+        booking,
         options.startDate,
         options.endDate,
-        existingBookings
+        booking.offer
       );
       errors.push(...checkDatesErrors);
     }

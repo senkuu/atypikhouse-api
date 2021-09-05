@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -10,11 +9,11 @@ import {
 import { Field, ObjectType } from "type-graphql";
 import { Offer } from "./Offer";
 import { User } from "./User";
+import { DatesEntity } from "./DatesEntity";
 
-//TODO: Resolver à faire
 @ObjectType()
 @Entity()
-export class Planning extends BaseEntity {
+export class Planning extends DatesEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;

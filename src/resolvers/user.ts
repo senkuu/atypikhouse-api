@@ -17,7 +17,7 @@ import { User, UserStatuses, UserTypes } from "../entities/User";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 
 // import utils
-import { validateRegister } from "../utils/validateRegister";
+import { validateRegister } from "../utils/validations/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 
 // import type
