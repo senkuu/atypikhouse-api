@@ -7,7 +7,7 @@ import {
   Resolver,
 } from "type-graphql";
 
-import { Offer } from "../entities/Offer";
+import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
@@ -55,7 +55,8 @@ export class OfferResolver {
     @Arg("cityId", { nullable: true }) cityId: number,
     @Arg("getCities", { nullable: true }) getCities: boolean,
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
-    @Arg("ownerId", { nullable: true }) ownerId: number
+    @Arg("ownerId", { nullable: true }) ownerId: number,
+    @Arg("status", { nullable: true }) status: OfferStatuses
   ): Promise<Offer[]> {
     let relations = [
       "owner",
@@ -77,15 +78,21 @@ export class OfferResolver {
       }
     }
 
-    let findCondition: FindConditions<Offer> = {};
+    let findConditions: FindConditions<Offer> = {};
     if (typeof ownerId !== "undefined") {
       let owner = await User.findOne(ownerId);
       if (owner !== null) {
-        findCondition["owner"] = owner;
+        findConditions["owner"] = owner;
       }
     }
+    if (
+      typeof status !== "undefined" &&
+      Object.values(OfferStatuses).includes(status)
+    ) {
+      findConditions["status"] = status;
+    }
 
-    let offers = await Offer.find({ relations, where: findCondition });
+    let offers = await Offer.find({ relations, where: findConditions });
 
     offers.forEach((offer) => {
       if (offer.coordinates !== null) {
