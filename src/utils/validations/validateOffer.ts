@@ -77,9 +77,6 @@ export const validateOffer = (
     }
   }
 
-  // Faire la récup owner, offerType et city dans createOffer après la vérif
-  // Traiter description et titre
-
   const titleLimit = 64;
   if (typeof options.title !== "undefined") {
     if (options.title.length > titleLimit) {
