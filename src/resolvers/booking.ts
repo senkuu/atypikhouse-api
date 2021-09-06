@@ -39,7 +39,8 @@ export class BookingResolver {
     let bookings = await Booking.createQueryBuilder("booking")
       .innerJoinAndSelect("booking.offer", "offer")
       .innerJoinAndSelect("booking.occupant", "occupant")
-      .innerJoinAndSelect("offer.owner", "owner");
+      .innerJoinAndSelect("offer.owner", "owner")
+      .innerJoinAndSelect("booking.review", "review");
 
     if (hideCancelled) {
       bookings = bookings.where("booking.status != :status", {
@@ -82,7 +83,7 @@ export class BookingResolver {
   @Query(() => Booking, { nullable: true })
   booking(@Arg("id") id: number): Promise<Booking | undefined> {
     return Booking.findOne(id, {
-      relations: ["offer", "occupant", "offer.owner"],
+      relations: ["offer", "occupant", "offer.owner", "review"],
     });
   }
 
