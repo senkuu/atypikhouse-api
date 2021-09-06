@@ -5,19 +5,19 @@ export const GeoJSONPoint = new GraphQLScalarType({
   name: "GeoJSONPoint",
   description: "Geometry scalar type",
   parseValue(value) {
-    console.log("parseValue : " + value);
+    //console.log("parseValue : " + value);
     return value;
   },
 
   serialize(value) {
-    console.log("serialize : " + value);
+    //console.log("serialize : " + value);
     return value;
   },
 
   parseLiteral(ast) {
-    console.log("parseLiteral : " + ast);
+    //console.log("parseLiteral : " + ast);
     if (ast.kind === Kind.OBJECT) {
-      console.log("ICI" + ast);
+      //console.log("ICI" + ast);
       return new Object(ast);
     }
     return null;

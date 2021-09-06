@@ -1,7 +1,7 @@
 import { Position } from "geojson";
 import { Offer } from "../entities/Offer";
 import { calculateDistanceBetweenPoints } from "./calculateDistanceBetweenPoints";
-import { getAverageRating } from "./getReviewsCountAndRating";
+import { getAverageRating } from "./getAverageRating";
 
 export function calculateOfferDistances(
   originPoint: Position,
@@ -10,10 +10,12 @@ export function calculateOfferDistances(
   const processedOffers = offers.slice();
 
   offers.forEach((offer) => {
-    offer.distance = calculateDistanceBetweenPoints(
-      originPoint,
-      offer.coordinates.coordinates
-    );
+    if (offer.coordinates !== null) {
+      offer.distance = calculateDistanceBetweenPoints(
+        originPoint,
+        offer.coordinates.coordinates
+      );
+    }
   });
 
   return processedOffers;

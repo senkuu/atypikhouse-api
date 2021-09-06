@@ -20,7 +20,8 @@ export class CriteriaResolver {
     @Arg("additional", { nullable: true }) additional: string,
     @Arg("offerTypeIds", () => [Number], { nullable: true })
     offerTypeIds: number[],
-    @Arg("criteriaType") criteriaType: CriteriaTypes
+    @Arg("criteriaType") criteriaType: CriteriaTypes,
+    @Arg("isGlobal") isGlobal: boolean
   ): Promise<Criteria | null> {
     if (typeof name === "undefined") {
       return null;
@@ -28,6 +29,10 @@ export class CriteriaResolver {
 
     if (typeof additional === "undefined") {
       additional = "";
+    }
+
+    if (typeof isGlobal === "undefined") {
+      isGlobal = false;
     }
 
     let offerTypes: OfferType[] = [];
@@ -53,6 +58,7 @@ export class CriteriaResolver {
       additional,
       offerTypes,
       criteriaType,
+      isGlobal,
     }).save();
   }
 
@@ -63,7 +69,8 @@ export class CriteriaResolver {
     @Arg("additional", () => String, { nullable: true }) additional: string,
     @Arg("offerTypeIds", () => [Number], { nullable: true })
     offerTypeIds: number[],
-    @Arg("criteriaType", { nullable: true }) criteriaType: CriteriaTypes
+    @Arg("criteriaType", { nullable: true }) criteriaType: CriteriaTypes,
+    @Arg("isGlobal", { nullable: true }) isGlobal: boolean
   ): Promise<Criteria | null> {
     const criteria = await Criteria.findOne(id);
     if (!criteria) {
@@ -74,6 +81,9 @@ export class CriteriaResolver {
     }
     if (typeof additional !== "undefined") {
       criteria.additional = additional;
+    }
+    if (typeof isGlobal !== "undefined") {
+      criteria.isGlobal = isGlobal;
     }
     if (typeof offerTypeIds !== "undefined" && offerTypeIds.length > 0) {
       let offerTypes: OfferType[] = [];
