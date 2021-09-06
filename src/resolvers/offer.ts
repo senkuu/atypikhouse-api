@@ -75,7 +75,7 @@ export class OfferResolver {
   ): Promise<{ offers: Offer[] }> {
     let offersQuery = Offer.createQueryBuilder("offer")
       .innerJoinAndSelect("offer.owner", "owner")
-      .innerJoinAndSelect("offer.bookings", "booking")
+      .leftJoinAndSelect("offer.bookings", "booking")
       .innerJoinAndSelect("offer.offerType", "offerType")
       .leftJoinAndSelect("offer.offerCriterias", "criterias")
       .leftJoinAndSelect("booking.review", "review")
@@ -166,7 +166,7 @@ export class OfferResolver {
   ): Promise<Offer | undefined> {
     let offerQuery = Offer.createQueryBuilder("offer")
       .innerJoinAndSelect("offer.owner", "owner")
-      .innerJoinAndSelect("offer.bookings", "booking")
+      .leftJoinAndSelect("offer.bookings", "booking")
       .innerJoinAndSelect("offer.offerType", "offerType")
       .leftJoinAndSelect("offer.offerCriterias", "criterias")
       .leftJoinAndSelect("booking.review", "review")
