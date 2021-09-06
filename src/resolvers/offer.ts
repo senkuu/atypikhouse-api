@@ -9,7 +9,7 @@ import {
 
 import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
-import { User } from "../entities/User";
+import { User, UserStatuses } from "../entities/User";
 import { Criteria } from "../entities/Criteria";
 import { CriteriaInput } from "./CriteriaInput";
 import { OfferCriteria } from "../entities/OfferCriteria";
@@ -22,7 +22,6 @@ import {
   calculateOfferScore,
   sortOffersByDistance,
 } from "../utils/sortOffers";
-import { FindConditions } from "typeorm";
 import { ReadStream } from "fs";
 import { FieldError } from "./FieldError";
 import { CreateOfferInput, UpdateOfferInput } from "./inputs/OfferInput";
@@ -70,44 +69,53 @@ export class OfferResolver {
     @Arg("getCities", { nullable: true }) getCities: boolean,
     @Arg("getDepartements", { nullable: true }) getDepartements: boolean,
     @Arg("ownerId", { nullable: true }) ownerId: number,
-    @Arg("status", { nullable: true }) status: OfferStatuses
+    @Arg("status", { nullable: true }) status: OfferStatuses,
+    @Arg("getOffersFromNotActivatedOwners", { nullable: true })
+    getOffersFromNotActivatedOwners: boolean
   ): Promise<{ offers: Offer[] }> {
-    let relations = [
-      "owner",
-      "bookings",
-      "offerType",
-      "offerCriterias",
-      "bookings.review",
-      "photos",
-    ];
+    let offersQuery = Offer.createQueryBuilder("offer")
+      .innerJoinAndSelect("offer.owner", "owner")
+      .innerJoinAndSelect("offer.bookings", "booking")
+      .innerJoinAndSelect("offer.offerType", "offerType")
+      .leftJoinAndSelect("offer.offerCriterias", "criterias")
+      .leftJoinAndSelect("booking.review", "review")
+      .leftJoinAndSelect("booking.photos", "photo");
 
     if (
       (typeof getCities !== "undefined" && getCities) ||
       (typeof getDepartements !== "undefined" && getDepartements) ||
       typeof cityId !== "undefined"
     ) {
-      relations.push("city");
+      offersQuery.innerJoinAndSelect("booking.city", "city");
 
       if (typeof getDepartements !== "undefined" && getDepartements) {
-        relations.push("city.departement");
+        offersQuery.innerJoinAndSelect("city.departement", "departement");
       }
     }
 
-    let findConditions: FindConditions<Offer> = {};
+    if (
+      typeof getOffersFromNotActivatedOwners === "undefined" ||
+      !getOffersFromNotActivatedOwners
+    ) {
+      offersQuery.where("owner.status = :status", {
+        status: UserStatuses.ACTIVATED,
+      });
+    }
+
     if (typeof ownerId !== "undefined") {
       let owner = await User.findOne(ownerId);
       if (owner !== null) {
-        findConditions["owner"] = owner;
+        offersQuery.andWhere("owner.id = :owner", { owner: owner!.id });
       }
     }
     if (
       typeof status !== "undefined" &&
       Object.values(OfferStatuses).includes(status)
     ) {
-      findConditions["status"] = status;
+      offersQuery.andWhere("status = :status", { status });
     }
 
-    let offers = await Offer.find({ relations, where: findConditions });
+    let offers = await offersQuery.getMany();
 
     offers.forEach((offer) => {
       if (offer.coordinates !== null) {
@@ -151,18 +159,32 @@ export class OfferResolver {
   }
 
   @Query(() => Offer, { nullable: true })
-  async offer(@Arg("id") id: number): Promise<Offer | undefined> {
-    let offer: Offer | undefined = await Offer.findOne(id, {
-      relations: [
-        "owner",
-        "bookings",
-        "offerType",
-        "offerCriterias",
-        "city",
-        "city.departement",
-        "photos",
-      ],
-    });
+  async offer(
+    @Arg("id") id: number,
+    @Arg("showOfferEvenIfOwnerIsNotActivated", { nullable: true })
+    showOfferEvenIfOwnerIsNotActivated: boolean
+  ): Promise<Offer | undefined> {
+    let offerQuery = Offer.createQueryBuilder("offer")
+      .innerJoinAndSelect("offer.owner", "owner")
+      .innerJoinAndSelect("offer.bookings", "booking")
+      .innerJoinAndSelect("offer.offerType", "offerType")
+      .leftJoinAndSelect("offer.offerCriterias", "criterias")
+      .leftJoinAndSelect("booking.review", "review")
+      .leftJoinAndSelect("booking.photos", "photo")
+      .innerJoinAndSelect("booking.city", "city")
+      .innerJoinAndSelect("city.departement", "departement")
+      .where("offer.id = :offer", { offer: id });
+
+    if (
+      typeof showOfferEvenIfOwnerIsNotActivated === "undefined" ||
+      !showOfferEvenIfOwnerIsNotActivated
+    ) {
+      offerQuery.andWhere("owner.status = :status", {
+        status: UserStatuses.ACTIVATED,
+      });
+    }
+
+    let offer: Offer | undefined = await offerQuery.getOne();
 
     if (typeof offer !== "undefined" && offer.coordinates !== null) {
       [offer.latitude, offer.longitude] = offer.coordinates.coordinates;
