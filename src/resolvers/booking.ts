@@ -40,7 +40,7 @@ export class BookingResolver {
       .innerJoinAndSelect("booking.offer", "offer")
       .innerJoinAndSelect("booking.occupant", "occupant")
       .innerJoinAndSelect("offer.owner", "owner")
-      .innerJoinAndSelect("booking.review", "review");
+      .leftJoinAndSelect("booking.review", "review");
 
     if (hideCancelled) {
       bookings = bookings.where("booking.status != :status", {
