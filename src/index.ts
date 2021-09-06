@@ -2,14 +2,14 @@ import "reflect-metadata";
 
 require("dotenv").config();
 
-import fs from 'fs'
-import path from 'path'
+import fs from "fs";
+import path from "path";
 
 import express from "express";
 import session from "express-session";
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
-import multer from 'multer';
+import multer from "multer";
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -47,7 +47,7 @@ import { Notice } from "./entities/Notice";
 import { PlanningResolver } from "./resolvers/planning";
 
 const main = async () => {
-  const connection = await createConnection({
+  await createConnection({
     type: "postgres",
     host: process.env.DB_HOST,
     database: process.env.DB_NAME,
@@ -83,7 +83,7 @@ const main = async () => {
     parseInt(process.env.REDIS_PORT!),
     process.env.REDIS_HOST
   );
-  const upload = multer({ dest: 'uploads/' });
+  const upload = multer({ dest: "uploads/" });
 
   app.use(
     cors({
@@ -111,11 +111,12 @@ const main = async () => {
     })
   );
 
-  app.get('/images/:imageId', async (req, res) => {
+  // @ts-ignore
+  app.get("/images/:imageId", async (req, res) => {
     const imageId = Number(req.params.imageId);
 
     if (isNaN(imageId)) {
-      return res.status(500).send({ error: `invalid id type` })
+      return res.status(500).send({ error: `invalid id type` });
     }
 
     const image = await Photo.findOne(imageId);
@@ -124,40 +125,45 @@ const main = async () => {
       return res.sendStatus(404);
     }
 
-    res.setHeader('Content-Type', image.mimetype);
-    fs.createReadStream(path.join(image.url)).pipe(res)
-  })
+    res.setHeader("Content-Type", image.mimetype);
+    fs.createReadStream(path.join(image.url)).pipe(res);
+  });
 
-  app.post('/offer/:offerId/images', upload.array('image', 6), async (req, res) => {
-    const offerId = Number(req.params.offerId);
+  app.post(
+    "/offer/:offerId/images",
+    upload.array("image", 6),
+    async (req, res) => {
+      const offerId = Number(req.params.offerId);
 
-    if (!req.files) {
-      return res.status(500).send({ error: "Please add an image" })
+      if (!req.files) {
+        return res.status(500).send({ error: "Please add an image" });
+      }
+
+      if (isNaN(offerId)) {
+        return res.status(500).send({ error: `invalid id type` });
+      }
+
+      const offer = await Offer.findOne(offerId);
+
+      if (!offer) {
+        return res
+          .status(500)
+          .send({ error: `The offer with id ${offerId} doesn't exist` });
+      }
+
+      //@ts-ignore
+      req.files!.forEach((file) => {
+        Photo.create({
+          filename: file.filename,
+          url: file.path,
+          mimetype: file.mimetype,
+          offer,
+        }).save();
+      });
+
+      return res.status(200).send({ message: `file uploaded` });
     }
-
-    if (isNaN(offerId)) {
-      return res.status(500).send({ error: `invalid id type` })
-    }
-
-    const offer = await Offer.findOne(offerId)
-
-    if (!offer) {
-      return res.status(500).send({ error: `The offer with id ${offerId} doesn't exist` })
-    }
-
-    //@ts-ignore
-    req.files!.forEach((file) => {
-      Photo.create({
-        filename: file.filename,
-        url: file.path,
-        mimetype: file.mimetype,
-        offer
-      }).save();
-    })
-
-
-    return res.status(200).send({ message: `file uploaded` })
-  })
+  );
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
