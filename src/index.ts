@@ -7,9 +7,14 @@ import path from 'path'
 
 import express from "express";
 import session from "express-session";
+import bodyParser from 'body-parser'
 import cors from "cors";
 import { ApolloServer } from "apollo-server-express";
 import multer from 'multer';
+import stripe from 'stripe';
+const Stripe = new stripe(process.env.STRIPE_SECRET_TEST!, {
+  apiVersion: '2020-08-27',
+});
 
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -84,6 +89,9 @@ const main = async () => {
   );
   const upload = multer({ dest: 'uploads/' });
 
+  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json());
+
   app.use(
     cors({
       origin: process.env.WEB_URL ?? "http://localhost:3000",
@@ -157,6 +165,34 @@ const main = async () => {
 
     return res.status(200).send({ message: `file uploaded` })
   })
+
+  app.post("/stripe/charge", async (req, res) => {
+    console.log("stripe-routes.js 9 | route reached", req.body);
+    console.log(req.body)
+    let { amount, id } = req.body;
+    console.log("stripe-routes.js 10 | amount and id", amount, id);
+    try {
+      const payment = await Stripe.paymentIntents.create({
+        amount: amount,
+        currency: "EUR",
+        description: "Atypik'house",
+        payment_method: id,
+        confirm: true,
+      });
+      console.log("stripe-routes.js 19 | payment", payment);
+      res.json({
+        message: "Payment Successful",
+        success: true,
+      });
+    } catch (error) {
+      console.log("stripe-routes.js 17 | error", error);
+      res.json({
+        message: "Payment Failed",
+        success: false,
+      });
+    }
+  });
+
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
