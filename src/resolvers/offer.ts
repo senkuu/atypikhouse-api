@@ -31,16 +31,18 @@ import { createEntity } from "../utils/createEntity";
 import { updateEntity } from "../utils/updateEntity";
 import { ReadStream } from "fs";
 
+@ObjectType()
+class SearchOfferResponse {
+  @Field(() => [Offer])
+  offers: Offer[];
+}
+
+
 export type File = {
   filename: string;
   mimetype: string;
   encoding: string;
   stream?: ReadStream;
-}
-@ObjectType()
-class SearchOfferResponse {
-  @Field(() => [Offer])
-  offers: Offer[];
 }
 
 @ObjectType()
@@ -51,22 +53,7 @@ class OfferResponse {
   @Field(() => Offer, { nullable: true })
   offer?: Offer;
 }
-import { DeleteReasons } from "../entities/DeleteReasons";
-import { FindConditions } from "typeorm";
-import { ReadStream } from "fs";
 
-export type File = {
-  filename: string;
-  mimetype: string;
-  encoding: string;
-  stream?: ReadStream;
-}
-
-@ObjectType()
-class OfferResponse {
-  @Field(() => [Offer])
-  offers: Offer[];
-}
 
 @Resolver()
 export class OfferResolver {
@@ -403,7 +390,7 @@ export class OfferResolver {
       }
     }*/
 
-    offer = await updateEntity(
+    offer = updateEntity(
       offer,
       options,
       errors,

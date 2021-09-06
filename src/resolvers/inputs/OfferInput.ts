@@ -23,8 +23,8 @@ export class CreateOfferInput {
   cityId: number;
   @Field()
   ownerId: number;
-  @Field()
-  offerTypeId: number;
+  @Field({ nullable: true })
+  offerTypeId?: number;
   /*@Field(() => criteriaValue, { nullable: true })
   criterias?: criteriaValue;*/
   @Field({ nullable: true })
