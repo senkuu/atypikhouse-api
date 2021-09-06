@@ -1,4 +1,4 @@
-import { validateRegister } from "../../src/utils/validateRegister";
+import { validateRegister } from "../../src/utils/validations/validateRegister";
 import { UserTypes } from "../../src/entities/User";
 
 describe("validateRegister function", () => {

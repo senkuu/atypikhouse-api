@@ -1,7 +1,7 @@
 import { Position } from "geojson";
 import { Offer } from "../entities/Offer";
 import { calculateDistanceBetweenPoints } from "./calculateDistanceBetweenPoints";
-import { getAverageRating } from "./getReviewsCountAndRating";
+import { getAverageRating } from "./getAverageRating";
 
 export function calculateOfferDistances(
   originPoint: Position,
