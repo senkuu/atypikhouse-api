@@ -17,11 +17,11 @@ import { User, UserStatuses, UserTypes } from "../entities/User";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 
 // import utils
-import { validateRegister } from "../utils/validateRegister";
+import { validateRegister } from "../utils/validations/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
 
 // import type
-import { RegisterInput } from "./RegisterInput";
+import { RegisterInput } from "./inputs/RegisterInput";
 import { FieldError } from "./FieldError";
 import { isValidEmail } from "../utils/isValidEmail";
 import { isValidUrl } from "../utils/isValidUrl";
@@ -46,6 +46,7 @@ enum UserQueryRelations {
   NOTICES = "notices",
   LINKED_NOTICES = "linkedNotices",
   PHOTO = "photo",
+  PLANNING_DATA = "planningData",
 }
 
 @ObjectType()
@@ -84,7 +85,7 @@ export class UserResolver {
       });
     }
 
-    return User.find({ relations });
+    return User.find({ relations, order: { id: "ASC" } });
   }
 
   @Query(() => User, { nullable: true })
@@ -95,8 +96,7 @@ export class UserResolver {
         "bookings",
         "city",
         "notices",
-        "linkedNotices",
-        "photo",
+        "linkedNotices"
       ],
     });
   }
@@ -199,7 +199,9 @@ export class UserResolver {
     @Arg("email") email: string,
     @Ctx() { redis }: MyContext
   ): Promise<boolean> {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({
+      where: { email, status: UserStatuses.ACTIVATED },
+    });
 
     if (!user) {
       // the email is not in db

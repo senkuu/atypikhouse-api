@@ -68,6 +68,7 @@ export class Offer extends BaseEntity {
     type: "geography",
     spatialFeatureType: "Point",
     srid: 4326,
+    nullable: true,
   })
   coordinates: Point;
 
@@ -98,9 +99,10 @@ export class Offer extends BaseEntity {
   @Field({ nullable: true })
   averageRating: number;
 
-  @Field()
-  @ManyToOne(() => City, (city) => city.offers)
-  city!: City;
+  // Temporarily nullable
+  @Field({ nullable: true })
+  @ManyToOne(() => City, (city) => city.offers, { nullable: true })
+  city: City;
 
   @Field(() => User)
   @ManyToOne(() => User, (user) => user.offers)

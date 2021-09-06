@@ -1,15 +1,26 @@
 import {
-  Query,
-  Resolver,
   Arg,
+  Field,
   Mutation,
   ObjectType,
-  Field,
+  Query,
+  Resolver,
 } from "type-graphql";
 import { OfferType } from "../entities/OfferType";
 import { Criteria } from "../entities/Criteria";
 import { FieldError } from "./FieldError";
-import { validateOfferType } from "../utils/validateOfferType";
+import { validateOfferType } from "../utils/validations/validateOfferType";
+import {
+  addCriteriasInList,
+  generateCriteriasList,
+  removeCriteriasFromList,
+} from "../utils/processCriteriasList";
+import { updateEntity } from "../utils/updateEntity";
+import { createEntity } from "../utils/createEntity";
+import {
+  CreateOfferTypeInput,
+  UpdateOfferTypeInput,
+} from "./inputs/OfferTypeInput";
 
 @ObjectType()
 class OfferTypeResponse {
@@ -24,21 +35,19 @@ class OfferTypeResponse {
 export class OfferTypeResolver {
   @Query(() => [OfferType])
   offerTypes(): Promise<OfferType[]> {
-    return OfferType.find({ relations: ["criterias"] }); // Fonctionnel (vérifié en console.log)
+    return OfferType.find({ relations: ["criterias"] });
   }
 
   @Query(() => OfferType, { nullable: true })
   offerType(@Arg("id") id: number): Promise<OfferType | undefined> {
-    return OfferType.findOne(id, { relations: ["criterias"] }); // Fonctionnel (vérifié en console.log)
+    return OfferType.findOne(id, { relations: ["criterias"] });
   }
 
   @Mutation(() => OfferTypeResponse)
   async createOfferType(
-    @Arg("name") name: string,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[]
+    @Arg("options") options: CreateOfferTypeInput
   ): Promise<OfferTypeResponse> {
-    const errors: FieldError[] = validateOfferType(name /*, criteriaIds*/);
+    const errors: FieldError[] = validateOfferType(options);
 
     if (errors.length > 0) {
       return {
@@ -46,124 +55,124 @@ export class OfferTypeResolver {
       };
     }
 
-    // Voir comment tester ce bloc
     let criterias: Criteria[] = [];
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          console.log("-- Critère " + criteria.name + " trouvé");
-          criterias.push(criteria);
-        }
-      });
+    if (
+      typeof options.criteriaIds !== "undefined" &&
+      options.criteriaIds.length > 0
+    ) {
+      let criteriasCheck = await generateCriteriasList(options.criteriaIds);
+      errors.push(...criteriasCheck.errors);
+      criterias = criteriasCheck.criterias;
     }
 
-    let offerType;
+    let offerType: OfferType;
     try {
-      offerType = await OfferType.create({
-        name: name,
-        criterias: criterias,
-      }).save({});
+      offerType = await createEntity(options, "OfferType", ["criteriaIds"]);
+
+      if (criterias.length > 0) {
+        offerType.criterias = criterias;
+        offerType = await OfferType.save(offerType);
+      }
+
+      return { errors, offerType };
     } catch (err) {
       if (err.code === "23505" || err.detail.includes("already exists")) {
-        return {
-          errors: [{ field: "name", message: "Offer type already exists" }],
-        };
+        errors.push({ field: "name", message: "Le type d'offre existe déjà" });
       } else {
         console.log(err.code + " " + err.detail);
+        errors.push({
+          field: "unknown",
+          message: "Erreur inconnue, veuillez contacter l'administrateur",
+        });
       }
-    }
 
-    criterias.forEach(function (item, index) {
-      console.log(item, index);
-    });
-    return { offerType };
+      return { errors };
+    }
   }
 
-  @Mutation(() => OfferType, { nullable: true })
+  @Mutation(() => OfferTypeResponse)
   async updateOfferType(
     @Arg("id") id: number,
-    @Arg("name", () => String, { nullable: true }) name: string,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[]
-  ): Promise<OfferType | null> {
-    const offerType = await OfferType.findOne(id);
+    @Arg("options") options: UpdateOfferTypeInput
+  ): Promise<OfferTypeResponse> {
+    let offerType = await OfferType.findOne(id, { relations: ["criterias"] });
     if (!offerType) {
-      return null;
-    }
-    if (typeof name !== "undefined") {
-      offerType.name = name;
-    }
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      let criterias: Criteria[] = [];
-
-      criteriaIds.forEach(async (id) => {
-        let criteria = await Criteria.findOne(id);
-        if (criteria) {
-          criterias.push(criteria);
-        }
-      });
-
-      offerType.criterias = criterias;
+      return {
+        errors: [{ field: "id", message: "Le type d'offre est introuvable" }],
+      };
     }
 
-    OfferType.update({ id }, { ...offerType });
-    return offerType;
+    const errors: FieldError[] = validateOfferType(options);
+
+    offerType = updateEntity(offerType, options, errors, ["criteriaIds"]);
+
+    if (
+      typeof options.criteriaIds !== "undefined" &&
+      options.criteriaIds.length > 0
+    ) {
+      let criteriasCheck = await generateCriteriasList(options.criteriaIds);
+      errors.push(...criteriasCheck.errors);
+      offerType.criterias = criteriasCheck.criterias;
+    }
+
+    offerType = await OfferType.save(offerType);
+    return { errors, offerType };
   }
 
-  @Mutation(() => OfferType, { nullable: true })
+  @Mutation(() => OfferTypeResponse, { nullable: true })
   async addOfferTypeCriterias(
     @Arg("id") id: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
+    @Arg("criteriaIds", () => [Number])
     criteriaIds: number[]
-  ): Promise<OfferType | null> {
+  ): Promise<OfferTypeResponse> {
     let offerType = await OfferType.findOne(id, { relations: ["criterias"] });
-
     if (!offerType) {
-      return null;
+      return {
+        errors: [{ field: "id", message: "Le type d'offre est introuvable" }],
+      };
     }
 
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (criteriaId) => {
-        let criteria = await Criteria.findOne(criteriaId);
+    const errors: FieldError[] = [];
 
-        if (
-          criteria &&
-          !offerType!.criterias.find((criteria) => criteria.id === criteriaId)
-        ) {
-          offerType!.criterias.push(criteria);
-        }
-      });
+    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
+      let criteriasCheck = await addCriteriasInList(
+        offerType.criterias,
+        criteriaIds
+      );
+      errors.push(...criteriasCheck.errors);
+      offerType.criterias = criteriasCheck.criterias;
     }
 
     await OfferType.save(offerType!);
-    return offerType!;
+    return { errors, offerType };
   }
 
-  @Mutation(() => OfferType, { nullable: true })
+  @Mutation(() => OfferTypeResponse, { nullable: true })
   async removeOfferTypeCriterias(
     @Arg("id") id: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
+    @Arg("criteriaIds", () => [Number])
     criteriaIds: number[]
-  ): Promise<OfferType | null> {
+  ): Promise<OfferTypeResponse> {
     let offerType = await OfferType.findOne(id, { relations: ["criterias"] });
-    if (!offerType && typeof offerType) {
-      return null;
+    if (!offerType) {
+      return {
+        errors: [{ field: "id", message: "Le type d'offre est introuvable" }],
+      };
     }
+
+    const errors: FieldError[] = [];
 
     if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (id) => {
-        let criteriaIndex = offerType!.criterias.findIndex(
-          (criteria) => criteria.id == id
-        );
-        if (criteriaIndex > -1) {
-          offerType!.criterias.splice(criteriaIndex, 1);
-        }
-      });
+      let criteriasCheck = removeCriteriasFromList(
+        offerType.criterias,
+        criteriaIds
+      );
+      errors.push(...criteriasCheck.errors);
+      offerType.criterias = criteriasCheck.criterias;
     }
 
-    OfferType.save(offerType!);
-    return offerType!;
+    offerType = await OfferType.save(offerType);
+    return { errors, offerType };
   }
 
   @Mutation(() => Boolean)

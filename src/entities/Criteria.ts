@@ -35,6 +35,10 @@ export class Criteria extends BaseEntity {
   additional: string;
 
   @Field()
+  @Column({ default: false })
+  isGlobal: boolean;
+
+  @Field()
   @Column({
     type: "enum",
     enum: CriteriaTypes,

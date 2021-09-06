@@ -1,6 +1,7 @@
-import { isValidEmail } from "./isValidEmail";
-import { RegisterInput } from "../resolvers/RegisterInput";
-import { FieldError } from "../resolvers/FieldError";
+import { isValidEmail } from "../isValidEmail";
+import { RegisterInput } from "../../resolvers/inputs/RegisterInput";
+import { FieldError } from "../../resolvers/FieldError";
+import { UserStatuses, UserTypes } from "../../entities/User";
 
 export const validateRegister = (options: RegisterInput): FieldError[] => {
   const errors: FieldError[] = [];
@@ -47,12 +48,26 @@ export const validateRegister = (options: RegisterInput): FieldError[] => {
     });
   }
 
+  if (
+    typeof options.status === "undefined" ||
+    !Object.values(UserStatuses).includes(options.status)
+  ) {
+    options.status = UserStatuses.ACTIVATION_PENDING;
+  }
+
+  if (
+    typeof options.userType === "undefined" ||
+    !Object.values(UserTypes).includes(options.userType)
+  ) {
+    options.userType = UserTypes.DEFAULT;
+  }
+
   //TODO: En attente d'intégration
   /*if (!/[0-9]/.test(options.password) || !/[A-Z]/.test(options.password)) {
     errors.push({
       field: "password",
       message:
-        "Le mot de passe doit co mporter au moins 1 chiffre et 1 majuscule",
+        "Le mot de passe doit comporter au moins 1 chiffre et 1 majuscule",
     });
   }*/
 

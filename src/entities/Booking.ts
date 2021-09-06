@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Column,
   Entity,
   PrimaryGeneratedColumn,
@@ -12,6 +11,7 @@ import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { Offer } from "./Offer";
 import { User } from "./User";
 import { Review } from "./Review";
+import { DatesEntity } from "./DatesEntity";
 
 export enum BookingStatuses {
   WAITING_APPROVAL = "WAITING_APPROVAL",
@@ -38,7 +38,7 @@ registerEnumType(CancelReasons, {
 
 @ObjectType()
 @Entity()
-export class Booking extends BaseEntity {
+export class Booking extends DatesEntity {
   @Field()
   @PrimaryGeneratedColumn()
   id!: number;
@@ -70,6 +70,10 @@ export class Booking extends BaseEntity {
   @Field()
   @Column({ type: "decimal" })
   priceTTC!: number;
+
+  @Field()
+  @Column({ type: "decimal" })
+  touristTax!: number;
 
   @Field()
   @Column({ type: "timestamp" })
