@@ -140,7 +140,7 @@ export class ReviewResolver {
 
     let review: Review;
     try {
-      review = await createEntity(options, "Booking", ["bookingId"], {
+      review = await createEntity(options, "Review", ["bookingId"], {
         booking: booking,
       });
 
