@@ -31,12 +31,12 @@ class ReviewResponse {
 // / occupantId is compatible with offerId or ownerId
 @Resolver()
 export class ReviewResolver {
-  @Query(() => [Review], { nullable: true })
+  @Query(() => [Review])
   async reviews(
     @Arg("offerId", { nullable: true }) offerId?: number,
     @Arg("ownerId", { nullable: true }) ownerId?: number,
     @Arg("occupantId", { nullable: true }) occupantId?: number
-  ): Promise<Review[] | null> {
+  ): Promise<Review[]> {
     let reviews = await Review.createQueryBuilder("review")
       .innerJoinAndSelect("review.booking", "booking")
       .innerJoinAndSelect("booking.offer", "offer")
@@ -117,6 +117,18 @@ export class ReviewResolver {
           field: "booking",
           message: "La réservation est introuvable",
         });
+      } else {
+        const bookingEndDay = new Date(booking!.endDate)
+          .setHours(0, 0, 0, 0)
+          .valueOf();
+        const dateNow = new Date(Date.now()).setHours(0, 0, 0, 0).valueOf();
+        if (bookingEndDay >= dateNow) {
+          errors.push({
+            field: "booking",
+            message:
+              "La réservation doit être passée pour pouvoir laisser un avis",
+          });
+        }
       }
     }
 
