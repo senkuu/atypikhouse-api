@@ -33,6 +33,7 @@ export const validateDates = (
 ): FieldError[] => {
   const errors: FieldError[] = [];
 
+  const dateNow = new Date(Date.now()).setHours(0, 0, 0, 0).valueOf();
   if (typeof options.startDate !== "undefined") {
     if (isNaN(options.startDate.getTime())) {
       errors.push({
@@ -40,6 +41,19 @@ export const validateDates = (
         message: "La date de début est incorrecte",
       });
       options.startDate = undefined;
+    } else if (
+      !(options instanceof UpdateDatesInput) ||
+      options.startDate.valueOf() !== entity!.startDate.valueOf()
+    ) {
+      const startDateToCompare = new Date(options.startDate!.getTime())
+        .setHours(0, 0, 0, 0)
+        .valueOf();
+      if (startDateToCompare < dateNow) {
+        errors.push({
+          field: "startDate",
+          message: "La date de début ne peut pas se situer dans le passé",
+        });
+      }
     }
   }
   if (typeof options.endDate !== "undefined") {
@@ -49,6 +63,19 @@ export const validateDates = (
         message: "La date de fin est incorrecte",
       });
       options.endDate = undefined;
+    } else if (
+      !(options instanceof UpdateDatesInput) ||
+      options.endDate.valueOf() !== entity!.endDate.valueOf()
+    ) {
+      const endDateToCompare = new Date(options.endDate!.getTime())
+        .setHours(0, 0, 0, 0)
+        .valueOf();
+      if (endDateToCompare < dateNow) {
+        errors.push({
+          field: "endDate",
+          message: "La date de fin ne peut pas se situer dans le passé",
+        });
+      }
     }
   }
 
