@@ -3,10 +3,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -14,7 +12,6 @@ import { Field, ObjectType, registerEnumType } from "type-graphql";
 import { Offer } from "./Offer";
 import { Booking } from "./Booking";
 import { Notice } from "./Notice";
-import { Photo } from "./Photo";
 import { Planning } from "./Planning";
 import { City } from "./City";
 
@@ -93,10 +90,10 @@ export class User extends BaseEntity {
   linkedNotices: Notice[];
 
   // Photo de profil
-  @Field(() => Photo, { nullable: true })
+  /*@Field(() => Photo, { nullable: true })
   @OneToOne(() => Photo, (photo) => photo.user, { nullable: true })
   @JoinColumn()
-  photo: Photo;
+  photo: Photo;*/
 
   @Field(() => [Planning], { nullable: true })
   @OneToMany(() => Planning, (planning) => planning.owner, { nullable: true })
