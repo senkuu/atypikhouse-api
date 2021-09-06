@@ -79,7 +79,7 @@ export class OfferResolver {
       .innerJoinAndSelect("offer.offerType", "offerType")
       .leftJoinAndSelect("offer.offerCriterias", "criterias")
       .leftJoinAndSelect("booking.review", "review")
-      .leftJoinAndSelect("booking.photos", "photo");
+      .leftJoinAndSelect("offer.photos", "photo");
 
     if (
       (typeof getCities !== "undefined" && getCities) ||
@@ -170,7 +170,7 @@ export class OfferResolver {
       .innerJoinAndSelect("offer.offerType", "offerType")
       .leftJoinAndSelect("offer.offerCriterias", "criterias")
       .leftJoinAndSelect("booking.review", "review")
-      .leftJoinAndSelect("booking.photos", "photo")
+      .leftJoinAndSelect("offer.photos", "photo")
       .innerJoinAndSelect("booking.city", "city")
       .innerJoinAndSelect("city.departement", "departement")
       .where("offer.id = :offer", { offer: id });
