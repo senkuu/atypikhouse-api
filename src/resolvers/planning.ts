@@ -33,40 +33,33 @@ class PlanningDataResponse {
 @Resolver()
 export class PlanningResolver {
   // Si offerId est renseigné, affiche les indisponibilités hors réservations liées à cette offre. Si ownerId est renseigné seul (sans offerId) : n'affiche que les indisponibilités concernant l'intégralité des hébergements du propriétaire, et pas celles spécifiques à un lieu
-  @Query(() => [Planning], { nullable: true })
+  @Query(() => [Planning])
   async plannings(
     @Arg("options") options: SearchPlanningDataInput
-  ): Promise<Planning[] | null> {
+  ): Promise<Planning[]> {
     if (typeof options.offerId !== "undefined") {
-      const offer = await Offer.findOne(options.offerId, {
-        relations: ["owner"],
-      });
+      const offer = await Offer.findOne(options.offerId);
       if (!offer) {
-        return null;
-      }
-
-      if (
-        typeof options.ownerId !== "undefined" &&
-        offer.owner.id !== options.ownerId
-      ) {
-        return null;
+        return [];
       }
 
       return Planning.find({
-        where: { offer: offer },
+        where: { offer },
+        relations: ["offer"],
       });
     } else if (typeof options.ownerId !== "undefined") {
       const owner = await User.findOne(options.ownerId);
       if (!owner) {
-        return null;
+        return [];
       }
 
       return Planning.find({
-        where: { offer: null, user: owner },
+        where: { owner },
+        relations: ["owner", "owner.offers"],
       });
     }
 
-    return null;
+    return [];
   }
 
   // Si offerId est renseigné, ownerId est ignoré
