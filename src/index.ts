@@ -45,6 +45,7 @@ import { Planning } from "./entities/Planning";
 import { NoticeType } from "./entities/NoticeType";
 import { Notice } from "./entities/Notice";
 import { PlanningResolver } from "./resolvers/planning";
+import { ReviewResolver } from "./resolvers/review";
 
 const main = async () => {
   await createConnection({
@@ -178,6 +179,7 @@ const main = async () => {
         RegionResolver,
         DepartementResolver,
         PlanningResolver,
+        ReviewResolver,
       ],
       validate: false,
     }),

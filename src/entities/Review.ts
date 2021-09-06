@@ -11,7 +11,6 @@ import {
 import { Field, ObjectType } from "type-graphql";
 import { Booking } from "./Booking";
 
-//TODO: Resolver à faire (si besoin)
 @ObjectType()
 @Entity()
 export class Review extends BaseEntity {
