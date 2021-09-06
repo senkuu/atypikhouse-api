@@ -55,6 +55,13 @@ export const validateReview = (
         message: "La note doit être comprise entre 1 et " + ratingLimit,
       });
     }
+
+    if (!Number.isInteger(options.rating)) {
+      errors.push({
+        field: "rating",
+        message: "La note doit être un nombre entier",
+      });
+    }
   }
 
   return errors;
