@@ -10,10 +10,12 @@ export function calculateOfferDistances(
   const processedOffers = offers.slice();
 
   offers.forEach((offer) => {
-    offer.distance = calculateDistanceBetweenPoints(
-      originPoint,
-      offer.coordinates.coordinates
-    );
+    if (offer.coordinates !== null) {
+      offer.distance = calculateDistanceBetweenPoints(
+        originPoint,
+        offer.coordinates.coordinates
+      );
+    }
   });
 
   return processedOffers;
