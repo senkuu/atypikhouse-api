@@ -85,24 +85,27 @@ const main = async () => {
     process.env.REDIS_HOST
   );
   const upload = multer({ dest: "uploads/" });
-  const allowedOrigins = [process.env.WEB_URL, "http://localhost:3000", 'https://dashboard.atypikhou.se']
+  const allowedOrigins = [
+    process.env.WEB_URL,
+    "http://localhost:3000",
+    "http://localhost:4000",
+    "https://dashboard.atypikhou.se",
+  ];
 
   //@ts-ignore
   const corsOptions = {
     //@ts-ignore
-    origin: function(origin, callback) {
+    origin: function (origin, callback) {
       if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true)
+        callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'))
+        callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true
-  }
+    credentials: true,
+  };
 
-  app.use(
-    cors(corsOptions)
-  );
+  app.use(cors(corsOptions));
 
   app.use(
     session({
