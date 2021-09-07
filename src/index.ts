@@ -85,7 +85,7 @@ const main = async () => {
     process.env.REDIS_HOST
   );
   const upload = multer({ dest: "uploads/" });
-  const allowedOrigins = ['http://open-24.com', 'http://close-24.com']
+  const allowedOrigins = [process.env.WEB_URL, "http://localhost:3000", 'https://dashboard.atypikhou.se']
 
   //@ts-ignore
   const corsOptions = {
