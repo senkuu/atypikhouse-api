@@ -64,7 +64,7 @@ export class CriteriaResolver {
     }
   }
 
-  @Mutation(() => Criteria, { nullable: true })
+  @Mutation(() => CriteriaResponse, { nullable: true })
   async updateCriteria(
     @Arg("id") id: number,
     @Arg("options") options: UpdateCriteriaInput
