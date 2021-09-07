@@ -103,7 +103,14 @@ export class CriteriaResolver {
       offerTypeIds.forEach(async (id) => {
         let offerType = await OfferType.findOne(id);
         if (offerType) {
-          criteria.offerTypes.push(offerType);
+          if (criteria.offerTypes.find((offerType) => offerType.id === id)) {
+            errors.push({
+              field: "offerTypeIds",
+              message: `Le type d'offre ${id} (${offerType.name}) est déjà présent dans la liste`,
+            });
+          } else {
+            criteria.offerTypes.push(offerType);
+          }
         } else {
           errors.push({
             field: "offerTypeIds",
@@ -113,7 +120,7 @@ export class CriteriaResolver {
       });
     }
 
-    Criteria.update({ id }, { ...criteria });
+    await Criteria.save(criteria);
     return { errors, criteria };
   }
 
@@ -148,7 +155,7 @@ export class CriteriaResolver {
       });
     }
 
-    Criteria.update({ id }, { ...criteria });
+    await Criteria.save(criteria);
     return { errors, criteria };
   }
 
