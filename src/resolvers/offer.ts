@@ -10,10 +10,6 @@ import {
 import { Offer, OfferStatuses } from "../entities/Offer";
 import { OfferType } from "../entities/OfferType";
 import { User } from "../entities/User";
-import { Criteria } from "../entities/Criteria";
-import { CriteriaInput } from "./CriteriaInput";
-import { OfferCriteria } from "../entities/OfferCriteria";
-import { BooleanValues } from "./CriteriaInput";
 import { CoordinatesInput } from "./inputs/CoordinatesInput";
 import { Point, Position } from "geojson";
 import { City } from "../entities/City";
@@ -50,7 +46,7 @@ class SearchOfferResponse {
 }
 
 @ObjectType()
-class OfferResponse {
+export class OfferResponse {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
 
@@ -408,108 +404,6 @@ export class OfferResolver {
 
     offer = await Offer.save(offer);
     return { errors, offer };
-  }
-
-  @Mutation(() => Offer, { nullable: true })
-  async addOfferCriterias(
-    @Arg("offerId") id: number,
-    @Arg("criterias", () => [CriteriaInput], { nullable: true })
-    criterias: CriteriaInput[] // TODO : Voir comment faire mieux
-  ): Promise<Offer | null> {
-    let offer = await Offer.findOne(id, {
-      relations: ["offerCriterias", "offerType"],
-    });
-    if (!offer) {
-      return null;
-    }
-
-    if (typeof criterias !== "undefined" && criterias.length > 0) {
-      criterias.forEach(async (offerCriteria) => {
-        let criteria = await Criteria.findOne(offerCriteria.id, {
-          relations: ["offerTypes"],
-        });
-        if (
-          criteria &&
-          criteria.offerTypes.find(
-            (offerType) => offerType.id === offer!.offerType.id
-          )
-        ) {
-          // TODO : afficher des erreurs distinctes lorsque le critère n'existe pas, lorsqu'il ne correspond pas au type d'offre
-          if (
-            (criteria.criteriaType === "int" &&
-              !isNaN(parseInt(offerCriteria.value))) ||
-            (criteria.criteriaType === "boolean" &&
-              Object.values(BooleanValues).includes(offerCriteria.value)) ||
-            criteria.criteriaType === "string"
-          ) {
-            try {
-              await OfferCriteria.create({
-                offer: offer,
-                criteria: criteria,
-                value: offerCriteria.value,
-              }).save();
-            } catch (err) {
-              if (
-                err.code === "23505" ||
-                err.detail.includes("already exists")
-              ) {
-                /*return {
-                  errors: [
-                    { field: "name", message: "This criteria is already set" },
-                  ],
-                };*/
-              } else {
-                console.log(err.code + " " + err.detail);
-              }
-            }
-          }
-        }
-        //return; // TODO: Retourner une valeur explicite
-      });
-
-      await new Promise((r) => setTimeout(r, 20)); // Pas le choix pour afficher les éléments mis à jour
-
-      let updatedOffer = await Offer.findOne(id, {
-        relations: ["offerCriterias"],
-      });
-
-      return updatedOffer!;
-    }
-
-    return null;
-  }
-
-  @Mutation(() => Offer, { nullable: true })
-  async removeOfferCriterias(
-    @Arg("offerId") id: number,
-    @Arg("criteriaIds", () => [Number], { nullable: true })
-    criteriaIds: number[]
-  ): Promise<Offer | null> {
-    let offer = await Offer.findOne(id, { relations: ["offerCriterias"] });
-    if (!offer) {
-      return null;
-    }
-
-    if (typeof criteriaIds !== "undefined" && criteriaIds.length > 0) {
-      criteriaIds.forEach(async (criteriaId) => {
-        let foundOfferCriteria = offer!.offerCriterias.find(
-          (offerCriteria) => offerCriteria.criteria.id == criteriaId
-        );
-
-        if (typeof foundOfferCriteria !== "undefined") {
-          await OfferCriteria.remove(foundOfferCriteria);
-        }
-      });
-
-      await new Promise((r) => setTimeout(r, 20)); // Pas le choix pour afficher les éléments mis à jour
-
-      let updatedOffer = await Offer.findOne(id, {
-        relations: ["offerCriterias"],
-      });
-      return updatedOffer!;
-    }
-
-    return null;
   }
 
   @Mutation(() => Boolean)
