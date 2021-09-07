@@ -30,7 +30,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "email",
-        message: "This email is not valid",
+        message: "Cette adresse mail est invalide",
       },
     ]);
   });
@@ -49,7 +49,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "surname",
-        message: "Surname must have at least 2 characters",
+        message: "Le nom de famille doit comporter au moins 2 caractères",
       },
     ]);
   });
@@ -69,7 +69,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "surname",
-        message: "Surname must be lesser than 26",
+        message: "Le nom de famille doit comporter moins de 26 caractères",
       },
     ]);
   });
@@ -88,7 +88,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "name",
-        message: "Name must have at least 2 characters",
+        message: "Le prénom doit comporter au moins 2 caractères",
       },
     ]);
   });
@@ -108,7 +108,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "name",
-        message: "Name must be lesser than 26",
+        message: "Le prénom doit comporter moins de 26 caractères",
       },
     ]);
   });
@@ -127,26 +127,7 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "password",
-        message: "Password must have at least 8 characters",
-      },
-    ]);
-  });
-
-  it("should return an error when user type isn't valid", () => {
-    const invalidUser = {
-      email: "valid@email.com",
-      name: "John",
-      surname: "Doe",
-      password: "validPassword",
-      userType: "InvalidType" as UserTypes,
-    };
-
-    const errors = validateRegister(invalidUser);
-
-    expect(errors).toStrictEqual([
-      {
-        field: "userType",
-        message: "User type is not valid",
+        message: "Le mot de passe doit comporter au moins 8 caractères",
       },
     ]);
   });
@@ -165,15 +146,15 @@ describe("validateRegister function", () => {
     expect(errors).toStrictEqual([
       {
         field: "email",
-        message: "This email is not valid",
+        message: "Cette adresse mail est invalide",
       },
       {
         field: "name",
-        message: "Name must have at least 2 characters",
+        message: "Le prénom doit comporter au moins 2 caractères",
       },
       {
         field: "password",
-        message: "Password must have at least 8 characters",
+        message: "Le mot de passe doit comporter au moins 8 caractères",
       },
     ]);
   });

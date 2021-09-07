@@ -1,146 +1,143 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
-import { Criteria, CriteriaTypes } from "../entities/Criteria";
+import {
+  Arg,
+  Field,
+  Mutation,
+  ObjectType,
+  Query,
+  Resolver,
+} from "type-graphql";
+import { Criteria } from "../entities/Criteria";
 import { OfferType } from "../entities/OfferType";
+import {
+  CreateCriteriaInput,
+  UpdateCriteriaInput,
+} from "./inputs/CriteriaInput";
+import { FieldError } from "./FieldError";
+import { validateCriteria } from "../utils/validations/validateCriteria";
+import { createEntity } from "../utils/createEntity";
+import { updateEntity } from "../utils/updateEntity";
+
+@ObjectType()
+class CriteriaResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+
+  @Field(() => Criteria, { nullable: true })
+  criteria?: Criteria;
+}
 
 @Resolver()
 export class CriteriaResolver {
   @Query(() => [Criteria])
   criterias(): Promise<Criteria[]> {
-    return Criteria.find({ relations: ["offerType"] });
+    return Criteria.find({ relations: ["offerTypes"] });
   }
 
   @Query(() => Criteria, { nullable: true })
   criteria(@Arg("id") id: number): Promise<Criteria | undefined> {
-    return Criteria.findOne(id, { relations: ["offerType"] });
+    return Criteria.findOne(id, { relations: ["offerTypes"] });
   }
 
-  @Mutation(() => Criteria)
+  @Mutation(() => CriteriaResponse)
   async createCriteria(
-    @Arg("name") name: string,
-    @Arg("additional", { nullable: true }) additional: string,
-    @Arg("offerTypeIds", () => [Number], { nullable: true })
-    offerTypeIds: number[],
-    @Arg("criteriaType") criteriaType: CriteriaTypes,
-    @Arg("isGlobal") isGlobal: boolean
-  ): Promise<Criteria | null> {
-    if (typeof name === "undefined") {
-      return null;
+    @Arg("options") options: CreateCriteriaInput
+  ): Promise<CriteriaResponse> {
+    const errors: FieldError[] = validateCriteria(options);
+
+    if (errors.length > 0) {
+      return { errors };
     }
 
-    if (typeof additional === "undefined") {
-      additional = "";
-    }
+    let criteria: Criteria;
+    try {
+      criteria = await createEntity(options, "Criteria");
 
-    if (typeof isGlobal === "undefined") {
-      isGlobal = false;
-    }
-
-    let offerTypes: OfferType[] = [];
-    if (typeof offerTypeIds !== "undefined" && offerTypeIds.length > 0) {
-      offerTypeIds.forEach(async (id) => {
-        let offerType = await OfferType.findOne(id);
-        if (offerType) {
-          offerTypes.push(offerType);
-        }
+      return { errors, criteria };
+    } catch (err) {
+      console.log(err.code + " " + err.detail);
+      errors.push({
+        field: "unknown",
+        message: "Erreur inconnue, veuillez contacter l'administrateur",
       });
-    }
 
-    if (typeof criteriaType === "string") {
-      if (!Object.values(CriteriaTypes).includes(criteriaType)) {
-        criteriaType = CriteriaTypes.INT;
-      }
-    } else {
-      criteriaType = CriteriaTypes.INT;
+      return { errors };
     }
-
-    return Criteria.create({
-      name,
-      additional,
-      offerTypes,
-      criteriaType,
-      isGlobal,
-    }).save();
   }
 
-  @Mutation(() => Criteria, { nullable: true })
+  @Mutation(() => CriteriaResponse, { nullable: true })
   async updateCriteria(
     @Arg("id") id: number,
-    @Arg("name", () => String, { nullable: true }) name: string,
-    @Arg("additional", () => String, { nullable: true }) additional: string,
-    @Arg("offerTypeIds", () => [Number], { nullable: true })
-    offerTypeIds: number[],
-    @Arg("criteriaType", { nullable: true }) criteriaType: CriteriaTypes,
-    @Arg("isGlobal", { nullable: true }) isGlobal: boolean
-  ): Promise<Criteria | null> {
-    const criteria = await Criteria.findOne(id);
+    @Arg("options") options: UpdateCriteriaInput
+  ): Promise<CriteriaResponse> {
+    let criteria = await Criteria.findOne(id);
     if (!criteria) {
-      return null;
-    }
-    if (typeof name !== "undefined") {
-      criteria.name = name;
-    }
-    if (typeof additional !== "undefined") {
-      criteria.additional = additional;
-    }
-    if (typeof isGlobal !== "undefined") {
-      criteria.isGlobal = isGlobal;
-    }
-    if (typeof offerTypeIds !== "undefined" && offerTypeIds.length > 0) {
-      let offerTypes: OfferType[] = [];
-
-      offerTypeIds.forEach(async (id) => {
-        let offerType = await OfferType.findOne(id);
-        if (offerType) {
-          offerTypes.push(offerType);
-        }
-      });
-
-      criteria.offerTypes = offerTypes;
-    }
-    if (typeof criteriaType === "string") {
-      if (Object.values(CriteriaTypes).includes(criteriaType)) {
-        criteria.criteriaType = criteriaType;
-      }
+      return {
+        errors: [{ field: "id", message: "Le critère est introuvable" }],
+      };
     }
 
-    Criteria.update({ id }, { ...criteria });
-    return criteria;
+    const errors: FieldError[] = validateCriteria(options, criteria);
+
+    criteria = await updateEntity(criteria, options, errors);
+    criteria = await Criteria.save(criteria);
+
+    return { errors, criteria };
   }
 
-  @Mutation(() => Criteria, { nullable: true })
+  @Mutation(() => CriteriaResponse)
   async addCriteriaOfferTypes(
     @Arg("id") id: number,
-    @Arg("offerTypeIds", () => [Number], { nullable: true })
+    @Arg("offerTypeIds", () => [Number])
     offerTypeIds: number[]
-  ): Promise<Criteria | null> {
-    const criteria = await Criteria.findOne(id);
+  ): Promise<CriteriaResponse> {
+    const criteria = await Criteria.findOne(id, { relations: ["offerTypes"] });
     if (!criteria) {
-      return null;
+      return {
+        errors: [{ field: "id", message: "Le critère est introuvable" }],
+      };
     }
+
+    const errors: FieldError[] = [];
 
     if (typeof offerTypeIds !== "undefined" && offerTypeIds.length > 0) {
       offerTypeIds.forEach(async (id) => {
         let offerType = await OfferType.findOne(id);
         if (offerType) {
-          criteria.offerTypes.push(offerType);
+          if (criteria.offerTypes.find((offerType) => offerType.id === id)) {
+            errors.push({
+              field: "offerTypeIds",
+              message: `Le type d'offre ${id} (${offerType.name}) est déjà présent dans la liste`,
+            });
+          } else {
+            criteria.offerTypes.push(offerType);
+          }
+        } else {
+          errors.push({
+            field: "offerTypeIds",
+            message: `Le type d'offre ${id} est introuvable`,
+          });
         }
       });
     }
 
-    Criteria.update({ id }, { ...criteria });
-    return criteria;
+    await Criteria.save(criteria);
+    return { errors, criteria };
   }
 
-  @Mutation(() => Criteria, { nullable: true })
+  @Mutation(() => CriteriaResponse)
   async removeCriteriaOfferTypes(
     @Arg("id") id: number,
-    @Arg("offerTypeIds", () => [Number], { nullable: true })
+    @Arg("offerTypeIds", () => [Number])
     offerTypeIds: number[]
-  ): Promise<Criteria | null> {
-    const criteria = await Criteria.findOne(id);
+  ): Promise<CriteriaResponse> {
+    const criteria = await Criteria.findOne(id, { relations: ["offerTypes"] });
     if (!criteria) {
-      return null;
+      return {
+        errors: [{ field: "id", message: "Le critère est introuvable" }],
+      };
     }
+
+    const errors: FieldError[] = [];
 
     if (typeof offerTypeIds !== "undefined" && offerTypeIds.length > 0) {
       offerTypeIds.forEach(async (id) => {
@@ -149,12 +146,17 @@ export class CriteriaResolver {
         );
         if (offerTypeIndex > -1) {
           criteria.offerTypes.splice(offerTypeIndex, 1);
+        } else {
+          errors.push({
+            field: "offerTypeIds",
+            message: `Le type d'offre ${id} est introuvable sur ce critère`,
+          });
         }
       });
     }
 
-    Criteria.update({ id }, { ...criteria });
-    return criteria;
+    await Criteria.save(criteria);
+    return { errors, criteria };
   }
 
   @Mutation(() => Boolean)
