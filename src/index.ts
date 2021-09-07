@@ -88,7 +88,7 @@ const main = async () => {
 
   app.use(
     cors({
-      origin: process.env.WEB_URL ?? "http://localhost:3000",
+      origin: "*",
       credentials: true,
     })
   );
