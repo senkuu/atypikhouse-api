@@ -36,7 +36,7 @@ export class BookingResolver {
     @Arg("ownerId", { nullable: true }) ownerId?: number,
     @Arg("hideCancelled", { nullable: true }) hideCancelled?: boolean
   ): Promise<Booking[] | null> {
-    let bookings = await Booking.createQueryBuilder("booking")
+    let bookings = Booking.createQueryBuilder("booking")
       .innerJoinAndSelect("booking.offer", "offer")
       .innerJoinAndSelect("booking.occupant", "occupant")
       .innerJoinAndSelect("offer.owner", "owner")
