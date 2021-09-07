@@ -85,12 +85,23 @@ const main = async () => {
     process.env.REDIS_HOST
   );
   const upload = multer({ dest: "uploads/" });
+  const allowedOrigins = ['http://open-24.com', 'http://close-24.com']
+
+  //@ts-ignore
+  const corsOptions = {
+    //@ts-ignore
+    origin: function(origin, callback) {
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+    credentials: true
+  }
 
   app.use(
-    cors({
-      origin: "*",
-      credentials: true,
-    })
+    cors(corsOptions)
   );
 
   app.use(
