@@ -45,7 +45,7 @@ enum UserQueryRelations {
   CITY = "city",
   NOTICES = "notices",
   LINKED_NOTICES = "linkedNotices",
-  PHOTO = "photo",
+  //PHOTO = "photo",
   PLANNING_DATA = "planningData",
 }
 
@@ -97,7 +97,7 @@ export class UserResolver {
         "city",
         "notices",
         "linkedNotices",
-        "photo",
+        //"photo",
       ],
     });
   }
