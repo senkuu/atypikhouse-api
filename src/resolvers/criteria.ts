@@ -90,7 +90,7 @@ export class CriteriaResolver {
     @Arg("offerTypeIds", () => [Number])
     offerTypeIds: number[]
   ): Promise<CriteriaResponse> {
-    const criteria = await Criteria.findOne(id);
+    const criteria = await Criteria.findOne(id, { relations: ["offerTypes"] });
     if (!criteria) {
       return {
         errors: [{ field: "id", message: "Le critère est introuvable" }],
